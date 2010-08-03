@@ -1,0 +1,29 @@
+<configure
+   xmlns="http://namespaces.zope.org/zope"
+   xmlns:i18n="http://namespaces.zope.org/i18n"
+   i18n:domain="gocept.fssyncz2">
+
+  <permission id="zope.View" title="View stuff" />
+  <permission id="zope.ManageContent" title="View more stuff" />
+  <permission id="zope.ManageSite" title="View a lot of stuff" />
+
+  <include package="zope.app.fssync.file"/>
+  <include package="zope.app.fssync.folder"/>
+  <include package="zope.app.fssync.dublincore"/>
+  <include package="zope.app.fssync"/>
+
+  <permission id="zope.fssync.Serialize" title="Access to serializers" />
+  <permission id="zope.fssync.Deserialize" title="Access to deserializers" />
+
+  <class class="zope.app.fssync.file.adapter.FileSynchronizer">
+
+    <require
+       permission="zope.fssync.Deserialize"
+       interface="zope.fssync.interfaces.IFileDeserializer" />
+
+  </class>
+
+  <adapter factory="gocept.fssyncz2.traversing.OFSPhysicallyLocatable" />
+  <adapter factory="gocept.fssyncz2.pickle_.UnwrappedPickler" />
+
+</configure>
