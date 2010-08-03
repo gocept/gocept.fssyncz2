@@ -1,0 +1,16 @@
+<zope:configure
+   xmlns="http://namespaces.zope.org/browser"
+   xmlns:zope="http://namespaces.zope.org/zope">
+
+  <!-- toFS.snarf and fromFS.snarf views, for new fssync tools -->
+
+  <!-- fssync checkout, update -->
+  <page
+      for="zope.interface.Interface"
+      name="toFS.snarf"
+      permission="zope.View"
+      class="gocept.fssyncz2.SnarfFile"
+      attribute="show"
+      />
+
+</zope:configure>

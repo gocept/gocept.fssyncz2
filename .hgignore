@@ -1,0 +1,9 @@
+.installed.cfg
+Products
+bin
+develop-eggs
+downloads
+eggs
+parts
+var
+zope.*
