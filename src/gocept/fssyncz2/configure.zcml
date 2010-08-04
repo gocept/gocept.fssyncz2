@@ -26,4 +26,11 @@
   <adapter factory="gocept.fssyncz2.traversing.OFSPhysicallyLocatable" />
   <adapter factory="gocept.fssyncz2.pickle_.UnwrappedPickler" />
 
+  <utility
+     component=".folder.FolderSynchronizer"
+     provides="zope.fssync.interfaces.ISynchronizerFactory"
+     name="OFS.Folder.Folder"
+     permission="zope.View"
+     />
+
 </configure>
