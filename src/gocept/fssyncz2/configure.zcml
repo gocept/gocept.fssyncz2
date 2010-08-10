@@ -18,4 +18,10 @@
      name="OFS.Folder.Folder"
      />
 
+  <utility
+     component=".folder.FolderSynchronizer"
+     provides="zope.fssync.interfaces.ISynchronizerFactory"
+     name="OFS.Application.Application"
+     />
+
 </configure>
