@@ -4,6 +4,8 @@
 
   <!-- toFS.snarf and fromFS.snarf views, for new fssync tools -->
 
+  <zope:adapter factory=".EntryId" />
+
   <!-- fssync checkout, update -->
   <page
       for="zope.interface.Interface"
@@ -11,6 +13,22 @@
       permission="zope.View"
       class="gocept.fssyncz2.SnarfFile"
       attribute="show"
+      />
+
+  <page
+      for="zope.interface.Interface"
+      name="fromFS.snarf"
+      permission="zope.View"
+      class="gocept.fssyncz2.SnarfCommit"
+      attribute="run"
+      />
+
+  <page
+      for="zope.interface.Interface"
+      name="checkin.snarf"
+      permission="zope.View"
+      class="gocept.fssyncz2.SnarfCheckin"
+      attribute="run"
       />
 
 </zope:configure>
