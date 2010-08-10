@@ -31,4 +31,10 @@
       attribute="run"
       />
 
+<!--    <zope:utility -->
+<!--       component="zope.fssync.synchronizer.DirectorySynchronizer" -->
+<!--       provides="zope.fssync.interfaces.ISynchronizerFactory" -->
+<!--       name="zope.fssync.synchronizer.Extras" -->
+<!--       /> -->
+
 </zope:configure>
