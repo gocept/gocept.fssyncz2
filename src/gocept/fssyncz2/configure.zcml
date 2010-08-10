@@ -7,21 +7,7 @@
   <permission id="zope.ManageContent" title="View more stuff" />
   <permission id="zope.ManageSite" title="View a lot of stuff" />
 
-  <include package="zope.app.fssync.file"/>
-  <include package="zope.app.fssync.folder"/>
-  <include package="zope.app.fssync.dublincore"/>
   <include package="zope.app.fssync"/>
-
-  <permission id="zope.fssync.Serialize" title="Access to serializers" />
-  <permission id="zope.fssync.Deserialize" title="Access to deserializers" />
-
-  <class class="zope.app.fssync.file.adapter.FileSynchronizer">
-
-    <require
-       permission="zope.fssync.Deserialize"
-       interface="zope.fssync.interfaces.IFileDeserializer" />
-
-  </class>
 
   <adapter factory="gocept.fssyncz2.traversing.OFSPhysicallyLocatable" />
   <adapter factory="gocept.fssyncz2.pickle_.UnwrappedPickler" />
@@ -30,7 +16,6 @@
      component=".folder.FolderSynchronizer"
      provides="zope.fssync.interfaces.ISynchronizerFactory"
      name="OFS.Folder.Folder"
-     permission="zope.View"
      />
 
 </configure>
