@@ -19,7 +19,6 @@ class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
         2
 
         """
-        print self.context
         for key, value in self.context.objectItems():
             yield (key or '__empty__', value)
 
