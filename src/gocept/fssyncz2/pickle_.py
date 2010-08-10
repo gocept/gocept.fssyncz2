@@ -1,7 +1,7 @@
 import zope.fssync.pickle
 
 
-class UnwrappedPickler(zope.fssync.pickle.StandardPickler):
+class UnwrappedPickler(zope.fssync.pickle.XMLPickler):
 
     def __init__(self, context):
         super(UnwrappedPickler, self).__init__(context)
