@@ -14,7 +14,12 @@ class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
 
         The adapter will take any mapping:
 
-        >>> adapter = FolderSynchronizer({'x': 1, 'y': 2})
+        >>> import OFS.Folder
+        >>> import OFS.SimpleItem
+        >>> folder = OFS.Folder.Folder()
+        >>> _ = folder._setObject('x', OFS.SimpleItem.SimpleItem())
+        >>> _ = folder._setObject('y', OFS.SimpleItem.SimpleItem())
+        >>> adapter = FolderSynchronizer(folder)
         >>> len(list(adapter.iteritems()))
         2
 
@@ -25,19 +30,13 @@ class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
     def __setitem__(self, key, value):
         """Sets a folder item.
 
-        >>> from zope.app.folder import Folder
-        >>> folder = Folder()
+        >>> import OFS.Folder
+        >>> import OFS.SimpleItem
+        >>> folder = OFS.Folder.Folder()
         >>> adapter = FolderSynchronizer(folder)
-        >>> adapter[u'test'] = 42
+        >>> adapter[u'test'] = OFS.SimpleItem.SimpleItem()
         >>> folder[u'test']
-        42
-
-        Since non-unicode names must be 7bit-ascii we try
-        to convert them to unicode first:
-
-        >>> adapter['t\xc3\xa4st'] = 43
-        >>> adapter[u't\xe4st']
-        43
+        <SimpleItem at />
 
         """
         if not isinstance(key, unicode):
