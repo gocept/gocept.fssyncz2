@@ -1,7 +1,6 @@
 <configure
    xmlns="http://namespaces.zope.org/zope"
-   xmlns:i18n="http://namespaces.zope.org/i18n"
-   i18n:domain="gocept.fssyncz2">
+   i18n_domain="gocept.fssyncz2">
 
   <permission id="zope.View" title="View stuff" />
   <permission id="zope.ManageContent" title="View more stuff" />
