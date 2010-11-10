@@ -1,5 +1,6 @@
 import Missing
 import Testing.ZopeTestCase
+import doctest
 import gocept.fssyncz2.testing
 import pickle
 import unittest
@@ -48,4 +49,6 @@ class CheckoutTests(Testing.ZopeTestCase.FunctionalTestCase):
 def test_suite():
     return unittest.TestSuite(
         (unittest.makeSuite(Zope2ObjectsTest),
-         unittest.makeSuite(CheckoutTests)))
+         unittest.makeSuite(CheckoutTests),
+         doctest.DocTestSuite('gocept.fssyncz2.folder'),
+         ))
