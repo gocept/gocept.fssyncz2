@@ -5,18 +5,26 @@ import random
 import time
 
 
-class Zope2ServerLayer(object):
-    """Make sure checkout doesn't fail with Zope2.
-
-    """
+class Zope2FunctionalLayer(object):
 
     __bases__ = (Testing.ZopeTestCase.layer.ZopeLiteLayer,)
-    __name__ = 'layer'
+    __name__ = 'functional_layer'
 
     def setUp(self):
         Testing.ZopeTestCase.installProduct('Five')
         Testing.ZopeTestCase.layer.ZopeLiteLayer.setUp()
         Testing.ZopeTestCase.installPackage('gocept.fssyncz2')
+
+
+functional_layer = Zope2FunctionalLayer()
+
+
+class Zope2ServerLayer(Zope2FunctionalLayer):
+
+    __name__ = 'server_layer'
+
+    def setUp(self):
+        super(Zope2ServerLayer, self).setUp()
         # We need to access the Zope2 server from outside in order to see
         # effects related to security proxies.
         self.startZServer()
