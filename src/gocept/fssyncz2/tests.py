@@ -116,5 +116,6 @@ def test_suite():
     return unittest.TestSuite(
         (unittest.makeSuite(Zope2ObjectsTest),
          unittest.makeSuite(CheckoutTests),
+         unittest.makeSuite(PickleOrderTest),
          doctest.DocTestSuite('gocept.fssyncz2.folder'),
          ))
