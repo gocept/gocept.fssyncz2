@@ -112,10 +112,51 @@ folder/f
             self.app.manage_delObjects(['object'])
 
 
+class EncodingTest(Testing.ZopeTestCase.FunctionalTestCase):
+    """Make sure pieces of non-ASCII text are readable and editable on disk.
+
+    """
+
+    layer = gocept.fssyncz2.testing.functional_layer
+
+    def setUp(self):
+        super(EncodingTest, self).setUp()
+        self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
+
+    def test_string_encoding(self):
+        self.app._setObject('object', OFS.SimpleItem.SimpleItem())
+        self.app['object'].foo = '\xf6'
+        response = self.publish('/object/@@toFS.snarf', basic='manager:asdf')
+        self.assert_('<string encoding="string_escape">\\xf6</string>' in
+                     response.getBody())
+
+    def test_string_encoding_cdata(self):
+        self.app._setObject('object', OFS.SimpleItem.SimpleItem())
+        self.app['object'].foo = '<\xf6&>'
+        response = self.publish('/object/@@toFS.snarf', basic='manager:asdf')
+        self.assert_('<string encoding="string_escape"><![CDATA[<\\xf6&>]]></string>' in
+                     response.getBody())
+
+    def test_unicode_encoding(self):
+        self.app._setObject('object', OFS.SimpleItem.SimpleItem())
+        self.app['object'].foo = u'\xf6'
+        response = self.publish('/object/@@toFS.snarf', basic='manager:asdf')
+        self.assert_('<unicode encoding="unicode_escape">\\xf6</unicode>' in
+                     response.getBody())
+
+    def test_unicode_encoding_cdata(self):
+        self.app._setObject('object', OFS.SimpleItem.SimpleItem())
+        self.app['object'].foo = u'<\xf6&>'
+        response = self.publish('/object/@@toFS.snarf', basic='manager:asdf')
+        self.assert_('<unicode encoding="unicode_escape"><![CDATA[<\\xf6&>]]></unicode>' in
+                     response.getBody())
+
+
 def test_suite():
     return unittest.TestSuite(
         (unittest.makeSuite(Zope2ObjectsTest),
          unittest.makeSuite(CheckoutTests),
          unittest.makeSuite(PickleOrderTest),
+         unittest.makeSuite(EncodingTest),
          doctest.DocTestSuite('gocept.fssyncz2.folder'),
          ))

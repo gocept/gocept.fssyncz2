@@ -9,6 +9,7 @@ import zope.fssync.repository
 import zope.fssync.task
 import zope.interface
 import zope.security.proxy
+import zope.xmlpickle.ppml
 
 
 OriginalPickler = pickle.Pickler
@@ -22,6 +23,61 @@ class MissingSafePickler(OriginalPickler):
         return OriginalPickler.save(self, obj)
 
 pickle.Pickler = MissingSafePickler
+
+
+def convert_string(self, string):
+    """Convert a string to a form that can be included in XML text"""
+    if zope.xmlpickle.ppml._binary_char(string):
+        encoding = 'string_escape'
+    else:
+        encoding = ''
+    _, string = zope.xmlpickle.ppml._convert_sub(
+        string.encode('string_escape'))
+    return encoding, string
+
+zope.xmlpickle.ppml.String.convert = convert_string
+
+
+def convert_unicode(self, string):
+    if zope.xmlpickle.ppml._invalid_xml_char(string):
+        encoding = 'unicode_escape'
+    else:
+        encoding = ''
+    _, string = zope.xmlpickle.ppml._convert_sub(
+        string.encode('unicode_escape'))
+    return 'unicode_escape', string
+
+zope.xmlpickle.ppml.Unicode.convert = convert_unicode
+
+
+def unconvert_string(encoding, string):
+    if encoding == 'string_escape':
+        return string.decode('string_escape')
+    elif encoding:
+        raise ValueError('bad encoding', encoding)
+
+    return string
+
+zope.xmlpickle.ppml.unconvert_string = unconvert_string
+
+
+def unconvert_unicode(encoding, string):
+    if encoding == 'unicode_escape':
+        string = string.encode('ascii').decode('unicode_escape')
+    elif encoding:
+        raise ValueError('bad encoding', encoding)
+    return string
+
+zope.xmlpickle.ppml.unconvert_unicode = unconvert_unicode
+
+
+class Unicode(zope.xmlpickle.ppml.Unicode):
+
+    def convert(self, string):
+        if zope.xmlpickle.ppml._invalid_xml_char(string):
+            string = string.encode('utf-8')
+            return 'utf-8', string
+        return zope.xmlpickle.ppml._convert_sub(string.encode('utf-8'))
 
 
 class SnarfFile(zope.app.fssync.browser.SnarfFile):
