@@ -1,7 +1,10 @@
+import OFS.Folder
+import copy_reg
 import zope.fssync.synchronizer
 
 
-class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
+class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer,
+                         zope.fssync.synchronizer.DefaultSynchronizer):
     """Adapter to provide an fssync serialization of folders
     """
 
@@ -44,3 +47,15 @@ class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
         if key == '__empty__':
             key = ''
         self.context._setOb(key, value)
+
+
+def reduce(self):
+    rv = super(type(self), self).__reduce__()
+    if len(rv) >= 3 and rv[2] is not None:
+        state = rv[2]
+        for key in self.objectIds():
+            del state[key]
+    return rv
+
+
+copy_reg.dispatch_table[OFS.Folder.Folder] = reduce
