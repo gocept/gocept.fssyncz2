@@ -118,16 +118,26 @@ class InsecureCheckout(zope.fssync.task.Checkout):
     def dump(self, synchronizer, path):
         if synchronizer is None:
             return
-        if zope.fssync.interfaces.IDirectorySynchronizer.providedBy(synchronizer):
+
+        def dump_directory(path):
+            valid = True
             items = [(x, y, zope.security.proxy.removeSecurityProxy(s))
                      for x, y, s in self.serializableItems(synchronizer.iteritems(), path)]
             self.dumpSpecials(path, items)
             for name, key, s in items:   # recurse down the tree
                 self.dump(s, self.repository.join(path, name))
-        elif zope.fssync.interfaces.IFileSynchronizer.providedBy(synchronizer):
+
+        def dump_file(path):
             fp = self.repository.writeable(path)
             zope.security.proxy.removeSecurityProxy(synchronizer).dump(fp)
             fp.close()
+
+        if zope.fssync.interfaces.IDirectorySynchronizer.providedBy(synchronizer):
+            dump_directory(path)
+            if zope.fssync.interfaces.IFileSynchronizer.providedBy(synchronizer):
+                dump_file(self.repository.join(path, '@@Zope', 'State'))
+        elif zope.fssync.interfaces.IFileSynchronizer.providedBy(synchronizer):
+            dump_file(path)
         else:
             raise zope.fssync.task.SynchronizationError("invalid synchronizer")
 
