@@ -134,8 +134,6 @@ class InsecureCheckout(zope.fssync.task.Checkout):
 
         if zope.fssync.interfaces.IDirectorySynchronizer.providedBy(synchronizer):
             dump_directory(path)
-            if zope.fssync.interfaces.IFileSynchronizer.providedBy(synchronizer):
-                dump_file(self.repository.join(path, '@@Zope', 'State'))
         elif zope.fssync.interfaces.IFileSynchronizer.providedBy(synchronizer):
             dump_file(path)
         else:
