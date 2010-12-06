@@ -29,10 +29,4 @@
      name="zope.fssync.synchronizer.Extras"
      />
 
-<!--   <utility -->
-<!--      component=".pythonscript.PythonScriptSynchronizer" -->
-<!--      provides="zope.fssync.interfaces.ISynchronizerFactory" -->
-<!--      name="OFS.PythonScripts.PythonScript" -->
-<!--      /> -->
-
 </configure>
