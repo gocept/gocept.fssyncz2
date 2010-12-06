@@ -6,6 +6,7 @@ import zope.app.fssync.syncer
 import zope.component
 import zope.fssync.interfaces
 import zope.fssync.repository
+import zope.fssync.synchronizer
 import zope.fssync.task
 import zope.interface
 import zope.security.proxy
@@ -80,6 +81,25 @@ class Unicode(zope.xmlpickle.ppml.Unicode):
         return zope.xmlpickle.ppml._convert_sub(string.encode('utf-8'))
 
 
+def getSynchronizer(obj, raise_error=True):
+    dn = zope.fssync.synchronizer.dottedname(obj.__class__)
+
+    factory = zope.component.queryUtility(
+        zope.fssync.interfaces.ISynchronizerFactory, name=dn)
+    if factory is None:
+        factory = zope.component.queryUtility(
+            zope.fssync.interfaces.ISynchronizerFactory)
+    if factory is None:
+        if raise_error:
+            raise zope.fssync.synchronizer.MissingSynchronizer(dn)
+        return None
+
+    return factory(obj)
+
+
+zope.app.fssync.syncer.getSynchronizer = getSynchronizer
+
+
 class SnarfFile(zope.app.fssync.browser.SnarfFile):
 
     def show(self):
@@ -107,40 +127,9 @@ class SnarfCheckin(SnarfCommit):
     def run_submission(self):
         stream = self.request.stdin
         snarf = zope.fssync.repository.SnarfRepository(stream)
-        checkin = zope.fssync.task.Checkin(
-            zope.app.fssync.syncer.getSynchronizer, snarf)
+        checkin = zope.fssync.task.Checkin(getSynchronizer, snarf)
         checkin.perform(self.container, self.name, self.fspath)
         return ""
-
-
-class InsecureCheckout(zope.fssync.task.Checkout):
-
-    def dump(self, synchronizer, path):
-        if synchronizer is None:
-            return
-
-        def dump_directory(path):
-            valid = True
-            items = [(x, y, zope.security.proxy.removeSecurityProxy(s))
-                     for x, y, s in self.serializableItems(synchronizer.iteritems(), path)]
-            self.dumpSpecials(path, items)
-            for name, key, s in items:   # recurse down the tree
-                self.dump(s, self.repository.join(path, name))
-
-        def dump_file(path):
-            fp = self.repository.writeable(path)
-            zope.security.proxy.removeSecurityProxy(synchronizer).dump(fp)
-            fp.close()
-
-        if zope.fssync.interfaces.IDirectorySynchronizer.providedBy(synchronizer):
-            dump_directory(path)
-        elif zope.fssync.interfaces.IFileSynchronizer.providedBy(synchronizer):
-            dump_file(path)
-        else:
-            raise zope.fssync.task.SynchronizationError("invalid synchronizer")
-
-
-zope.fssync.task.Checkout = InsecureCheckout
 
 
 @zope.component.adapter(zope.interface.Interface)
