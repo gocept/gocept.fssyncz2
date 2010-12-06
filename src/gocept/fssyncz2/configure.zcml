@@ -24,7 +24,7 @@
      />
 
    <utility
-      component=".ExtraSynchronizer"
+      component="zope.fssync.synchronizer.DefaultSynchronizer"
       provides="zope.fssync.interfaces.ISynchronizerFactory"
       name="zope.fssync.synchronizer.Extras"
       />
