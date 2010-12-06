@@ -23,4 +23,10 @@
      name="OFS.Application.Application"
      />
 
+   <utility
+      component=".ExtraSynchronizer"
+      provides="zope.fssync.interfaces.ISynchronizerFactory"
+      name="zope.fssync.synchronizer.Extras"
+      />
+
 </configure>

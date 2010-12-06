@@ -100,6 +100,10 @@ def getSynchronizer(obj, raise_error=True):
 zope.app.fssync.syncer.getSynchronizer = getSynchronizer
 
 
+class ExtraSynchronizer(zope.fssync.synchronizer.DefaultSynchronizer):
+    pass
+
+
 class SnarfFile(zope.app.fssync.browser.SnarfFile):
 
     def show(self):
