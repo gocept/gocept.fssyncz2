@@ -72,15 +72,6 @@ def unconvert_unicode(encoding, string):
 zope.xmlpickle.ppml.unconvert_unicode = unconvert_unicode
 
 
-class Unicode(zope.xmlpickle.ppml.Unicode):
-
-    def convert(self, string):
-        if zope.xmlpickle.ppml._invalid_xml_char(string):
-            string = string.encode('utf-8')
-            return 'utf-8', string
-        return zope.xmlpickle.ppml._convert_sub(string.encode('utf-8'))
-
-
 def getSynchronizer(obj, raise_error=True):
     dn = zope.fssync.synchronizer.dottedname(obj.__class__)
 
