@@ -1,8 +1,45 @@
 import Lifetime
+import StringIO
 import Testing.ZopeTestCase
 import Testing.ZopeTestCase.layer
 import random
+import re
 import time
+import zope.fssync.snarf
+
+
+class Lines(StringIO.StringIO):
+
+    def __iter__(self):
+        self.seek(0)
+        return self
+
+    def close(self):
+        pass
+
+
+class SnarfAsDict(zope.fssync.snarf.Unsnarfer, dict):
+
+    def __init__(self, istr):
+        super(SnarfAsDict, self).__init__(istr)
+
+    def makedir(self, path):
+        pass
+
+    def createfile(self, path):
+        f = self[path] = Lines()
+        return f
+
+
+def unsnarf(response, path):
+    unsnarfed = SnarfAsDict(StringIO.StringIO(response.getBody()))
+    unsnarfed.unsnarf('')
+    return unsnarfed[path]
+
+
+def grep(pattern, lines):
+    pattern = re.compile(pattern)
+    return ''.join(filter(pattern.search, lines))
 
 
 class Zope2FunctionalLayer(object):

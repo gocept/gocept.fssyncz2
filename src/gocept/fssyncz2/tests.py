@@ -1,3 +1,4 @@
+from gocept.fssyncz2.testing import unsnarf, grep
 import Missing
 import OFS.SimpleItem
 import Testing.ZopeTestCase
@@ -5,6 +6,7 @@ import doctest
 import gocept.fssyncz2.testing
 import pickle
 import random
+import transaction
 import unittest
 import urllib2
 import zope.testbrowser.browser
@@ -63,29 +65,10 @@ class FolderTest(Testing.ZopeTestCase.FunctionalTestCase):
         self.app['folder'].b = 'bsdf'
         response = self.publish(
             '/folder/@@toFS.snarf', basic='manager:asdf')
-        self.assert_("""\
-folder/@@Zope/Entries.xml
-<?xml version='1.0' encoding='utf-8'?>
-<entries>
+        self.assertEquals("""\
   <entry name="foo"
-         keytype="__builtin__.str"
-         type="OFS.Image.File"
-         id="/folder/foo"
-         />
-</entries>
-""" in response.getBody())
-        self.assert_("""\
-@@Zope/Extra/folder
-<?xml version="1.0" encoding="utf-8" ?>
-<pickle>
-  <initialized_object>
-    <klass>
-      <global name="_reconstructor" module="copy_reg"/>
-    </klass>
-    <arguments>
-      <tuple>
-        <global name="Extras" module="zope.fssync.synchronizer"/>
-        <global name="dict" module="__builtin__"/>
+""", grep('<entry', unsnarf(response, 'folder/@@Zope/Entries.xml')))
+        self.assertTrue("""\
         <dictionary>
           <item key="__ac_local_roles__">
               <dictionary>
@@ -120,12 +103,7 @@ folder/@@Zope/Entries.xml
               <string></string>
           </item>
         </dictionary>
-      </tuple>
-    </arguments>
-  </initialized_object>
-</pickle>
-""" in response.getBody())
-        self.app.manage_delObjects(['folder'])
+""", unsnarf(response, '@@Zope/Extra/folder/attributes'))
 
 
 class PickleOrderTest(Testing.ZopeTestCase.FunctionalTestCase):
@@ -139,7 +117,7 @@ class PickleOrderTest(Testing.ZopeTestCase.FunctionalTestCase):
         super(PickleOrderTest, self).setUp()
         self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
 
-    def test_folder_entry_ordering(self):
+    def test_entries_xml_should_have_a_stable_sorting_order(self):
         for i in xrange(32):
             self.app.manage_addFolder('folder')
             creation_order = list('abcdef')
@@ -148,27 +126,17 @@ class PickleOrderTest(Testing.ZopeTestCase.FunctionalTestCase):
                 self.app['folder'].manage_addFile(key, 'foo')
             response = self.publish(
                 '/folder/@@toFS.snarf', basic='manager:asdf')
-            dump_lines = response.getBody().splitlines(True)
             self.assertEquals("""\
-name="folder"
-folder/@@Zope/Entries.xml
-name="a"
-name="b"
-name="c"
-name="d"
-name="e"
-name="f"
-folder/a
-folder/b
-folder/c
-folder/d
-folder/e
-folder/f
-""", ''.join(line[9:] for line in dump_lines
-             if ' folder/' in line or '<entry name=' in line))
+  <entry name="a"
+  <entry name="b"
+  <entry name="c"
+  <entry name="d"
+  <entry name="e"
+  <entry name="f"
+""", grep('<entry', unsnarf(response, 'folder/@@Zope/Entries.xml')))
             self.app.manage_delObjects(['folder'])
 
-    def test_attribute_ordering(self):
+    def test_objects_should_have_a_stable_attribute_sorting_order(self):
         for i in xrange(32):
             self.app._setObject('object', OFS.SimpleItem.SimpleItem())
             creation_order = list('abcdef')
@@ -177,43 +145,37 @@ folder/f
                 setattr(self.app['object'], key, 'foo')
             response = self.publish(
                 '/object/@@toFS.snarf', basic='manager:asdf')
-            dump_lines = response.getBody().splitlines(True)
             self.assertEquals("""\
-        <item key="__ac_local_roles__">
-              <item key="test_user_1_">
-        <item key="_owner">
           <key> <string>a</string> </key>
           <key> <string>b</string> </key>
           <key> <string>c</string> </key>
           <key> <string>d</string> </key>
           <key> <string>e</string> </key>
           <key> <string>f</string> </key>
-""", ''.join([line for line in dump_lines if 'key' in line][1:]))
+""", grep('<key>', unsnarf(response, 'root')))
             self.app.manage_delObjects(['object'])
 
-    def test_attribute_ordering_for_folder(self):
+    def test_folder_should_have_a_stable_attribute_sorting_order(self):
         # We test a folder's attribute serialisation specifically because we
         # reimplement folder serialisation for Zope2 and have actually seen
         # attribute serialisation for folders break at one point.
         for i in xrange(32):
-            self.app.manage_addFolder('object')
+            self.app.manage_addFolder('folder')
             creation_order = list('abcdef')
             random.shuffle(creation_order)
             for key in creation_order:
-                setattr(self.app['object'], key, 'foo')
+                setattr(self.app['folder'], key, 'foo')
             response = self.publish(
-                '/object/@@toFS.snarf', basic='manager:asdf')
-            dump_lines = response.getBody().splitlines(True)
+                '/folder/@@toFS.snarf', basic='manager:asdf')
             self.assertEquals("""\
-<key><string>a</string></key>
-<key><string>b</string></key>
-<key><string>c</string></key>
-<key><string>d</string></key>
-<key><string>e</string></key>
-<key><string>f</string></key>
-""", ''.join([line.replace(' ', '')
-              for line in dump_lines if '<key>' in line]))
-            self.app.manage_delObjects(['object'])
+      <key> <string>a</string> </key>
+      <key> <string>b</string> </key>
+      <key> <string>c</string> </key>
+      <key> <string>d</string> </key>
+      <key> <string>e</string> </key>
+      <key> <string>f</string> </key>
+""", grep('<key>', unsnarf(response, '@@Zope/Extra/folder/attributes')))
+            self.app.manage_delObjects(['folder'])
 
 
 class EncodingTest(Testing.ZopeTestCase.FunctionalTestCase):
