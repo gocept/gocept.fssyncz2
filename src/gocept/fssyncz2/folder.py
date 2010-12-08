@@ -3,8 +3,7 @@ import copy_reg
 import zope.fssync.synchronizer
 
 
-class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer,
-                         zope.fssync.synchronizer.DefaultSynchronizer):
+class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
     """Adapter to provide an fssync serialization of folders
     """
 
