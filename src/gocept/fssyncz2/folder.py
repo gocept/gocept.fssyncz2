@@ -32,20 +32,41 @@ class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
     def __setitem__(self, key, value):
         """Sets a folder item.
 
-        >>> import OFS.Folder
+        >>> import Zope2
+        >>> app = Zope2.app()
+        >>> app.manage_addFolder('folder')
+        >>> adapter = FolderSynchronizer(app['folder'])
         >>> import OFS.SimpleItem
-        >>> folder = OFS.Folder.Folder()
-        >>> adapter = FolderSynchronizer(folder)
-        >>> adapter[u'test'] = OFS.SimpleItem.SimpleItem()
-        >>> folder[u'test']
-        <SimpleItem at />
+        >>> adapter['test'] = OFS.SimpleItem.SimpleItem()
+        >>> app['folder']['test']
+        <SimpleItem at /folder/test>
 
         """
-        if not isinstance(key, unicode):
-            key = unicode(key, encoding='utf-8')
         if key == '__empty__':
             key = ''
-        self.context._setOb(key, value)
+        value._setId(key)
+        self.context._setObject(key, value)
+
+    def __delitem__(self, key):
+        """Deletes a folder item.
+
+        >>> import Zope2
+        >>> app = Zope2.app()
+        >>> app.manage_addFolder('folder')
+        >>> adapter = FolderSynchronizer(app['folder'])
+        >>> import OFS.SimpleItem
+        >>> adapter['test'] = OFS.SimpleItem.SimpleItem()
+        >>> app['folder']['test']
+        <SimpleItem at /folder/test>
+        >>> del adapter['test']
+        >>> app['folder']['test']
+        Traceback (most recent call last):
+        KeyError: 'test'
+
+        """
+        if key == '__empty__':
+            key = ''
+        self.context._delObject(key)
 
     def extras(self):
         extra = self.context.__dict__.copy()
