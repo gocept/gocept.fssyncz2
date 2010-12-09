@@ -6,7 +6,6 @@ import doctest
 import gocept.fssyncz2.testing
 import pickle
 import random
-import transaction
 import unittest
 import urllib2
 import zope.testbrowser.browser
@@ -39,7 +38,7 @@ class CheckoutTests(Testing.ZopeTestCase.FunctionalTestCase):
         self.app['folder'].manage_addFile('file', 'foo')
         self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
 
-    def test_remove_security_proxies(self):
+    def test_checkout_response_should_be_OK_and_a_snarf_archive(self):
         browser = zope.testbrowser.browser.Browser()
         browser.addHeader('Authorization',
                           'Basic '+'manager:asdf'.encode('base64'))
@@ -48,6 +47,13 @@ class CheckoutTests(Testing.ZopeTestCase.FunctionalTestCase):
                 'http://localhost:%s/folder/@@toFS.snarf' % self.layer.port)
         except urllib2.HTTPError, e:
             self.fail(e)
+        self.assertEquals("""\
+00000167 @@Zope/Extra/folder/@@Zope/Entries.xml
+00000669 @@Zope/Extra/folder/attributes
+00000223 @@Zope/Entries.xml
+00000186 folder/@@Zope/Entries.xml
+00001210 folder/file
+""", grep('^[0-9]{8}', browser.contents))
 
 
 class FolderTest(Testing.ZopeTestCase.FunctionalTestCase):

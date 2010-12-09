@@ -38,6 +38,8 @@ def unsnarf(response, path):
 
 
 def grep(pattern, lines):
+    if not hasattr(lines, 'read'):
+        lines = StringIO.StringIO(lines)
     pattern = re.compile(pattern)
     return ''.join(filter(pattern.search, lines))
 
