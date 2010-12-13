@@ -1,3 +1,4 @@
+from zope.i18nmessageid import ZopeMessageFactory as _
 import Missing
 import cgi
 import pickle
