@@ -4,6 +4,7 @@ import OFS.SimpleItem
 import Testing.ZopeTestCase
 import doctest
 import gocept.fssyncz2.testing
+import httplib
 import pickle
 import random
 import unittest
@@ -25,7 +26,7 @@ class Zope2ObjectsTest(unittest.TestCase):
                      repr(pickle.dumps({'foo': Missing.Value})))
 
 
-class CheckoutTests(Testing.ZopeTestCase.FunctionalTestCase):
+class ViewTests(Testing.ZopeTestCase.FunctionalTestCase):
     """Make sure checkout doesn't fail with Zope2.
 
     """
@@ -54,6 +55,84 @@ class CheckoutTests(Testing.ZopeTestCase.FunctionalTestCase):
 00000186 folder/@@Zope/Entries.xml
 00001210 folder/file
 """, grep('^[0-9]{8}', browser.contents))
+
+    def test_checkin_response_should_be_OK_objects_created_and_wrapped(self):
+        snarf = """\
+0 @@Zope/
+0 @@Zope/Extra/
+0 @@Zope/Extra/folder/
+0 @@Zope/Extra/folder/@@Zope/
+140 @@Zope/Extra/folder/@@Zope/Entries.xml
+<?xml version='1.0' encoding='utf-8'?>
+<entries>
+  <entry name="attributes" keytype="__builtin__.str" type="__builtin__.dict" />
+</entries>
+191 @@Zope/Extra/folder/attributes
+<?xml version="1.0" encoding="utf-8" ?>
+<pickle>
+  <dictionary>
+    <item key="id"> <string>folder</string> </item>
+    <item key="title"> <string></string> </item>
+  </dictionary>
+</pickle>
+187 @@Zope/Entries.xml
+<?xml version='1.0' encoding='utf-8'?>
+<entries>
+  <entry name="folder" keytype="__builtin__.str"
+         type="OFS.Folder.Folder" factory="OFS.Folder.Folder" id="/folder" />
+</entries>
+0 folder/
+0 folder/@@Zope/
+159 folder/@@Zope/Entries.xml
+<?xml version='1.0' encoding='utf-8'?>
+<entries>
+  <entry name="file" keytype="__builtin__.str"
+         type="OFS.Image.File" id="/folder/file" />
+</entries>
+807 folder/file
+<?xml version="1.0" encoding="utf-8" ?>
+<pickle>
+  <initialized_object>
+    <klass>
+      <global name="__newobj__" module="copy_reg"/>
+    </klass>
+    <arguments>
+      <tuple>
+        <global name="File" module="OFS.Image"/>
+      </tuple>
+    </arguments>
+    <state>
+      <dictionary>
+        <item key="_EtagSupport__etag"> <string>ts92221379.71</string> </item>
+        <item key="__name__"> <string>file</string> </item>
+        <item key="content_type"> <string>application/octet-stream</string> </item>
+        <item key="data"> <string>foo</string> </item>
+        <item key="precondition"> <string id="o0"></string> </item>
+        <item key="size"> <int>3</int> </item>
+        <item key="title"> <reference id="o0"/> </item>
+      </dictionary>
+    </state>
+  </initialized_object>
+</pickle>
+"""
+        self.assertFalse('folder2' in self.app.objectIds())
+
+        conn = httplib.HTTPConnection('localhost:%s' % self.layer.port)
+        conn.putrequest('POST',
+                        '/@@checkin.snarf?note=test&name=folder2&src=folder')
+        conn.putheader('Content-Type', 'application/x-snarf')
+        conn.putheader('Content-Length', str(len(snarf)))
+        conn.putheader('Authorization',
+                       'Basic '+'manager:asdf'.encode('base64'))
+        conn.putheader('Host', 'localhost:%s' % self.layer.port)
+        conn.putheader('Connection', 'close')
+        conn.endheaders()
+        conn.send(snarf)
+
+        response = conn.getresponse()
+        self.assertEqual(204, response.status)
+        self.assertEqual(
+            '<File at /folder2/file>', repr(self.app['folder2']['file']))
 
 
 class FolderTest(Testing.ZopeTestCase.FunctionalTestCase):
@@ -227,7 +306,7 @@ class EncodingTest(Testing.ZopeTestCase.FunctionalTestCase):
 def test_suite():
     return unittest.TestSuite(
         (unittest.makeSuite(Zope2ObjectsTest),
-         unittest.makeSuite(CheckoutTests),
+         unittest.makeSuite(ViewTests),
          unittest.makeSuite(FolderTest),
          unittest.makeSuite(PickleOrderTest),
          unittest.makeSuite(EncodingTest),
