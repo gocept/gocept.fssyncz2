@@ -4,7 +4,7 @@ from setuptools import find_packages
 
 setup(name='gocept.fssyncz2',
       version='0.1',
-      packages=find_packages(),
+      packages=find_packages('src'),
       include_package_data=True,
       namespace_packages=['gocept'],
       zip_safe=False,
