@@ -14,17 +14,14 @@ import zope.security.proxy
 import zope.xmlpickle.ppml
 
 
-OriginalPickler = pickle.Pickler
+original_save = pickle.Pickler.save
 
+def save(self, obj):
+    if obj is Missing.Value:
+        obj = None
+    return original_save(self, obj)
 
-class MissingSafePickler(OriginalPickler):
-
-    def save(self, obj):
-        if obj is Missing.Value:
-            obj = None
-        return OriginalPickler.save(self, obj)
-
-pickle.Pickler = MissingSafePickler
+pickle.Pickler.save = save
 
 
 def convert_string(self, string):
