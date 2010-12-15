@@ -3,9 +3,10 @@ from setuptools import find_packages
 
 
 setup(name='gocept.fssyncz2',
-      version='0.1',
+      version='1.0dev',
       packages=find_packages('src'),
       include_package_data=True,
+      package_dir={'': 'src'},
       namespace_packages=['gocept'],
       zip_safe=False,
       install_requires=[

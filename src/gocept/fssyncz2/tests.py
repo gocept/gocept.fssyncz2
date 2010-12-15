@@ -135,6 +135,20 @@ class ViewTests(Testing.ZopeTestCase.FunctionalTestCase):
             '<File at /folder2/file>', repr(self.app['folder2']['file']))
 
 
+class FileSystemTreeTest(Testing.ZopeTestCase.FunctionalTestCase):
+    """Make sure the file-system tree maps the object tree correctly.
+
+    """
+
+    layer = gocept.fssyncz2.testing.server_layer
+
+    def setUp(self):
+        Testing.ZopeTestCase.ZopeTestCase.setUp(self)
+        self.app.manage_addFolder('folder')
+        self.app['folder'].manage_addFile('file', 'foo')
+        self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
+
+
 class FolderTest(Testing.ZopeTestCase.FunctionalTestCase):
 
     layer = gocept.fssyncz2.testing.functional_layer
@@ -307,6 +321,7 @@ def test_suite():
     return unittest.TestSuite(
         (unittest.makeSuite(Zope2ObjectsTest),
          unittest.makeSuite(ViewTests),
+         unittest.makeSuite(FileSystemTreeTest),
          unittest.makeSuite(FolderTest),
          unittest.makeSuite(PickleOrderTest),
          unittest.makeSuite(EncodingTest),
