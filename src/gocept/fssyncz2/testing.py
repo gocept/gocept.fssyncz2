@@ -37,11 +37,14 @@ def unsnarf(response, path):
     return unsnarfed[path]
 
 
-def grep(pattern, lines):
+def grep(pattern, lines, sort=False):
     if not hasattr(lines, 'read'):
         lines = StringIO.StringIO(lines)
     pattern = re.compile(pattern)
-    return ''.join(filter(pattern.search, lines))
+    lines = filter(pattern.search, lines)
+    if sort:
+        lines = sorted(lines)
+    return ''.join(lines)
 
 
 class Zope2FunctionalLayer(object):

@@ -50,11 +50,11 @@ class ViewTests(Testing.ZopeTestCase.FunctionalTestCase):
             self.fail(e)
         self.assertEquals("""\
 00000167 @@Zope/Extra/folder/@@Zope/Entries.xml
-00000669 @@Zope/Extra/folder/attributes
-00000223 @@Zope/Entries.xml
 00000186 folder/@@Zope/Entries.xml
+00000223 @@Zope/Entries.xml
+00000669 @@Zope/Extra/folder/attributes
 00001210 folder/file
-""", grep('^[0-9]{8}', browser.contents))
+""", grep('^[0-9]{8}', browser.contents, sort=True))
 
     def test_checkin_response_should_be_OK_objects_created_and_wrapped(self):
         snarf = """\
