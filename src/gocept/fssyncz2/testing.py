@@ -52,7 +52,6 @@ class Zope2FunctionalLayer(object):
     def setUp(self):
         Testing.ZopeTestCase.installProduct('Five')
         Testing.ZopeTestCase.layer.ZopeLiteLayer.setUp()
-        Testing.ZopeTestCase.installPackage('gocept.fssyncz2')
 
 
 functional_layer = Zope2FunctionalLayer()
