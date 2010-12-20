@@ -1,6 +1,7 @@
 from gocept.fssyncz2.testing import unsnarf, grep
 import Missing
 import OFS.SimpleItem
+import StringIO
 import Testing.ZopeTestCase
 import doctest
 import gocept.fssyncz2.testing
@@ -52,7 +53,7 @@ class ViewTests(Testing.ZopeTestCase.FunctionalTestCase):
 00000167 @@Zope/Extra/folder/@@Zope/Entries.xml
 00000186 folder/@@Zope/Entries.xml
 00000223 @@Zope/Entries.xml
-00000669 @@Zope/Extra/folder/attributes
+00000605 @@Zope/Extra/folder/attributes
 00001210 folder/file
 """, grep('^[0-9]{8}', browser.contents, sort=True))
 
@@ -67,11 +68,10 @@ class ViewTests(Testing.ZopeTestCase.FunctionalTestCase):
 <entries>
   <entry name="attributes" keytype="__builtin__.str" type="__builtin__.dict" />
 </entries>
-191 @@Zope/Extra/folder/attributes
+139 @@Zope/Extra/folder/attributes
 <?xml version="1.0" encoding="utf-8" ?>
 <pickle>
   <dictionary>
-    <item key="id"> <string>folder</string> </item>
     <item key="title"> <string></string> </item>
   </dictionary>
 </pickle>
@@ -203,6 +203,80 @@ class FolderTest(Testing.ZopeTestCase.FunctionalTestCase):
           </item>
         </dictionary>
 """, unsnarf(response, '@@Zope/Extra/folder/attributes'))
+
+    def test_folder_attributes_are_unpickled(self):
+        snarf = """\
+0 @@Zope/
+0 @@Zope/Extra/
+0 @@Zope/Extra/folder/
+0 @@Zope/Extra/folder/@@Zope/
+140 @@Zope/Extra/folder/@@Zope/Entries.xml
+<?xml version='1.0' encoding='utf-8'?>
+<entries>
+  <entry name="attributes" keytype="__builtin__.str" type="__builtin__.dict" />
+</entries>
+289 @@Zope/Extra/folder/attributes
+<?xml version="1.0" encoding="utf-8" ?>
+<pickle>
+  <dictionary>
+    <item key="title"> <string></string> </item>
+    <item key="foo"> <string>FOO</string> </item>
+    <item key="bar"> <string>BAR</string> </item>
+    <item key="baz"> <string>BAZ</string> </item>
+  </dictionary>
+</pickle>
+187 @@Zope/Entries.xml
+<?xml version='1.0' encoding='utf-8'?>
+<entries>
+  <entry name="folder" keytype="__builtin__.str"
+         type="OFS.Folder.Folder" factory="OFS.Folder.Folder" id="/folder" />
+</entries>
+0 folder/
+0 folder/@@Zope/
+159 folder/@@Zope/Entries.xml
+<?xml version='1.0' encoding='utf-8'?>
+<entries>
+</entries>
+"""
+        self.assertFalse('folder2' in self.app.objectIds())
+
+        self.publish('/@@checkin.snarf?note=test&name=folder2&src=folder',
+                     basic='manager:asdf',
+                     request_method='POST',
+                     env={'CONTENT_TYPE': 'application/x-snarf'},
+                     stdin=StringIO.StringIO(snarf),
+                     handle_errors=False)
+
+        folder2 = self.app['folder2']
+        self.assertTrue(hasattr(folder2, 'foo'))
+        self.assertEqual('FOO', folder2.foo)
+        self.assertTrue(hasattr(folder2, 'bar'))
+        self.assertEqual('BAR', folder2.bar)
+        self.assertTrue(hasattr(folder2, 'baz'))
+        self.assertEqual('BAZ', folder2.baz)
+
+    def test_roundtrip(self):
+        self.app.manage_addFolder('folder')
+        self.app['folder'].manage_addFile('foo', 'bar')
+        self.app['folder'].a = 'asdf'
+        self.app['folder'].b = 'bsdf'
+        response = self.publish(
+            '/folder/@@toFS.snarf', basic='manager:asdf')
+
+        self.assertFalse('folder2' in self.app.objectIds())
+        self.publish('/@@checkin.snarf?note=test&name=folder2&src=folder',
+                     basic='manager:asdf',
+                     request_method='POST',
+                     env={'CONTENT_TYPE': 'application/x-snarf'},
+                     stdin=StringIO.StringIO(response.getBody()),
+                     handle_errors=False)
+
+        self.assertEqual('<Folder at /folder2>', repr(self.app['folder2']))
+        self.assertEqual('asdf', self.app['folder2'].a)
+        self.assertEqual('bsdf', self.app['folder2'].b)
+        self.assertEqual('<File at /folder2/foo>',
+                         repr(self.app['folder2']['foo']))
+        self.assertEqual('bar', self.app['folder2']['foo'].data)
 
 
 class PickleOrderTest(Testing.ZopeTestCase.FunctionalTestCase):

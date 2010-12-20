@@ -71,9 +71,13 @@ class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
     def extras(self):
         extra = self.context.__dict__.copy()
         extra.pop('_objects', None)
+        extra.pop('id', None)
         for key in self.context.objectIds():
             del extra[key]
         return zope.fssync.synchronizer.Extras(attributes=extra)
+
+    def setextras(self, extras):
+        self.context.__dict__.update(extras['attributes'])
 
 
 def reduce(self):
