@@ -37,12 +37,9 @@ zope.xmlpickle.ppml.String.convert = convert_string
 
 
 def convert_unicode(self, string):
-    if zope.xmlpickle.ppml._invalid_xml_char(string):
-	_, string = zope.xmlpickle.ppml._convert_sub(
-	    string.encode('unicode_escape'))
-	return 'unicode_escape', string
-    else:
-	return '', string
+    _, string = zope.xmlpickle.ppml._convert_sub(
+        string.encode('unicode_escape'))
+    return 'unicode_escape', string
 
 zope.xmlpickle.ppml.Unicode.convert = convert_unicode
 
