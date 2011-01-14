@@ -62,7 +62,7 @@ zope.xmlpickle.ppml.unconvert_string = unconvert_string
 
 def unconvert_unicode(encoding, string):
     if encoding == 'unicode_escape':
-        string = string.encode('ascii').decode('unicode_escape')
+        string = string.encode('ascii').decode('unicode_escape').encode('utf-8')
     elif encoding:
         raise ValueError('bad encoding', encoding)
     return string
