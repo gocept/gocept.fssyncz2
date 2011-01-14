@@ -27,12 +27,11 @@ pickle.Pickler.save = save
 def convert_string(self, string):
     """Convert a string to a form that can be included in XML text"""
     if zope.xmlpickle.ppml._binary_char(string):
-        encoding = 'string_escape'
+        _, string = zope.xmlpickle.ppml._convert_sub(
+            string.encode('string_escape'))
+        return 'string_escape', string
     else:
-        encoding = ''
-    _, string = zope.xmlpickle.ppml._convert_sub(
-        string.encode('string_escape'))
-    return encoding, string
+        return '', string
 
 zope.xmlpickle.ppml.String.convert = convert_string
 
