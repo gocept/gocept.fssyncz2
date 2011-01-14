@@ -390,6 +390,14 @@ class EncodingTest(Testing.ZopeTestCase.FunctionalTestCase):
         self.assert_('<unicode encoding="unicode_escape"><![CDATA[<\\xf6&>]]></unicode>' in
                      response.getBody())
 
+    def test_no_newline_escape(self):
+        self.app._setObject('object', OFS.SimpleItem.SimpleItem())
+        self.app['object'].foo = """Line 01
+Line 02
+Line 03"""
+        response = self.publish('/object/@@toFS.snarf', basic='manager:asdf')
+        self.assert_('<string>Line 01\nLine 02\nLine 03</string>' in
+                     response.getBody())
 
 def test_suite():
     return unittest.TestSuite(
