@@ -376,6 +376,13 @@ class EncodingTest(Testing.ZopeTestCase.FunctionalTestCase):
         self.assert_('<string encoding="string_escape"><![CDATA[<\\xf6&>]]></string>' in
                      response.getBody())
 
+    def test_string_encoding_cdata_ampersand(self):
+        self.app._setObject('object', OFS.SimpleItem.SimpleItem())
+        self.app['object'].foo = 'asdf&'
+        response = self.publish('/object/@@toFS.snarf', basic='manager:asdf')
+        self.assert_('<string><![CDATA[asdf&]]></string>' in
+                     response.getBody())
+
     def test_unicode_encoding(self):
         self.app._setObject('object', OFS.SimpleItem.SimpleItem())
         self.app['object'].foo = u'\xf6'
