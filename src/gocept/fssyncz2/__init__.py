@@ -105,12 +105,19 @@ class SnarfCommit(zope.app.fssync.browser.SnarfCheckin):
             self.args = {}
 
 
+class Checkin(zope.fssync.task.Checkin):
+
+    def createObject(self, container, name, *args, **kwargs):
+        super(Checkin, self).createObject(container, name, *args, **kwargs)
+        return container[name]
+
+
 class SnarfCheckin(SnarfCommit):
 
     def run_submission(self):
         stream = self.request.stdin
         snarf = zope.fssync.repository.SnarfRepository(stream)
-        checkin = zope.fssync.task.Checkin(getSynchronizer, snarf)
+        checkin = Checkin(getSynchronizer, snarf)
         checkin.perform(self.container, self.name, self.fspath)
         return ""
 
