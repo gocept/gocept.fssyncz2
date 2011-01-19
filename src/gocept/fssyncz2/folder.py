@@ -45,7 +45,8 @@ class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
         if key == '__empty__':
             key = ''
         value._setId(key)
-        self.context._setObject(key, value)
+        self.context._setObject(
+            key, value, set_owner=False, suppress_events=True)
 
     def __delitem__(self, key):
         """Deletes a folder item.
@@ -66,7 +67,7 @@ class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
         """
         if key == '__empty__':
             key = ''
-        self.context._delObject(key)
+        self.context._delObject(key, suppress_events=True)
 
     def extras(self):
         extra = self.context.__dict__.copy()
