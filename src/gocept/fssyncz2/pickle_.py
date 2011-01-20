@@ -1,4 +1,32 @@
+import pickle
+import types
+import zope.fssync.interfaces
 import zope.fssync.pickle
+import zope.xmlpickle.xmlpickle
+
+
+seen = {}
+path = []
+
+
+class Pickler(zope.xmlpickle.xmlpickle._PicklerThatSortsDictItems):
+
+    def save(self, obj):
+        path.append(repr(obj))
+        if 'UserFolder' not in path[0]:
+            try:
+                oid = obj._p_oid
+            except:
+                pass
+            else:
+                if isinstance(oid, str):
+                    if oid in seen:
+                        raise RuntimeError('OId %s doppelt: %s, %s' % (oid, seen[oid], path))
+                    seen[oid] = path
+
+        zope.xmlpickle.xmlpickle._PicklerThatSortsDictItems.save(self, obj)
+
+        path.pop()
 
 
 class UnwrappedPickler(zope.fssync.pickle.XMLPickler):
@@ -9,3 +37,12 @@ class UnwrappedPickler(zope.fssync.pickle.XMLPickler):
             self.context = self.context.aq_base
         except AttributeError:
             pass
+
+def dump(self, writeable):
+    pickler = Pickler(writeable, 0)
+    generator = zope.fssync.interfaces.IPersistentIdGenerator(self, None)
+    if generator is not None:
+        pickler.persistent_id = generator.id
+    pickler.dump(self.context)
+
+zope.fssync.pickle.StandardPickler.dump = dump
