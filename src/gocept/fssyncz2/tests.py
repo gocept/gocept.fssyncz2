@@ -149,6 +149,29 @@ class FileSystemTreeTest(Testing.ZopeTestCase.FunctionalTestCase):
         self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
 
 
+class ReferencesTest(Testing.ZopeTestCase.FunctionalTestCase):
+
+    layer = gocept.fssyncz2.testing.functional_layer
+
+    def setUp(self):
+        super(ReferencesTest, self).setUp()
+        self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
+
+    def test_multiple_references_to_one_object_abort_checkout(self):
+	self.app.manage_addFolder('folder')
+        self.app['folder'].manage_addFile('foo', '')
+        self.app['folder'].manage_addFile('bar', '')
+        response = self.publish(
+            '/folder/@@toFS.snarf', basic='manager:asdf')
+	body = response.getBody()
+	self.assertTrue('foo' in body)
+	self.assertTrue('bar' in body)
+	self.app['folder']['foo'].my_ref = self.app['folder']['bar']
+        response = self.publish(
+            '/folder/@@toFS.snarf', basic='manager:asdf')
+	self.assertTrue("doppelt: [\'<File at bar>\'], [\'<File at bar>\']" in response.getBody())
+
+
 class FolderTest(Testing.ZopeTestCase.FunctionalTestCase):
 
     layer = gocept.fssyncz2.testing.functional_layer
@@ -414,5 +437,6 @@ def test_suite():
          unittest.makeSuite(FolderTest),
          unittest.makeSuite(PickleOrderTest),
          unittest.makeSuite(EncodingTest),
+         unittest.makeSuite(ReferencesTest),
          doctest.DocTestSuite('gocept.fssyncz2.folder'),
          ))
