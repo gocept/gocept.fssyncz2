@@ -98,7 +98,7 @@ class SnarfFile(zope.app.fssync.browser.SnarfFile):
         return super(SnarfFile, self).show().read()
 
 
-class SnarfCommit(zope.app.fssync.browser.SnarfCheckin):
+class SnarfCheckin(zope.app.fssync.browser.SnarfCheckin):
 
     def check_content_type(self):
         if not self.request.get_header("Content-Type") == "application/x-snarf":
@@ -113,6 +113,13 @@ class SnarfCommit(zope.app.fssync.browser.SnarfCheckin):
         else:
             self.args = {}
 
+    def run_submission(self):
+        stream = self.request.stdin
+        snarf = zope.fssync.repository.SnarfRepository(stream)
+        checkin = Checkin(getSynchronizer, snarf)
+        checkin.perform(self.container, self.name, self.fspath)
+        return ""
+
 
 class Checkin(zope.fssync.task.Checkin):
 
@@ -121,14 +128,8 @@ class Checkin(zope.fssync.task.Checkin):
         return container[name]
 
 
-class SnarfCheckin(SnarfCommit):
-
-    def run_submission(self):
-        stream = self.request.stdin
-        snarf = zope.fssync.repository.SnarfRepository(stream)
-        checkin = Checkin(getSynchronizer, snarf)
-        checkin.perform(self.container, self.name, self.fspath)
-        return ""
+class SnarfCommit(zope.app.fssync.browser.SnarfCommit):
+    pass
 
 
 @zope.component.adapter(zope.interface.Interface)
