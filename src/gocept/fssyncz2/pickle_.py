@@ -13,16 +13,15 @@ class Pickler(zope.xmlpickle.xmlpickle._PicklerThatSortsDictItems):
 
     def save(self, obj):
         path.append(repr(obj))
-        if 'UserFolder' not in path[0]:
-            try:
-                oid = obj._p_oid
-            except:
-                pass
-            else:
-                if isinstance(oid, str):
-                    if oid in seen:
-                        raise RuntimeError('OId %s doppelt: %s, %s' % (oid, seen[oid], path))
-                    seen[oid] = path
+        try:
+            oid = obj._p_oid
+        except:
+            pass
+        else:
+            if isinstance(oid, str):
+                if oid in seen:
+                    raise RuntimeError('OId %s doppelt: %s, %s' % (oid, seen[oid], path))
+                seen[oid] = path
 
         zope.xmlpickle.xmlpickle._PicklerThatSortsDictItems.save(self, obj)
 
