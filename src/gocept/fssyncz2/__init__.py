@@ -13,6 +13,8 @@ import zope.interface
 import zope.security.proxy
 import zope.xmlpickle.ppml
 import gocept.fssyncz2.pickle_
+import zope.traversing.api
+import Zope2
 
 
 original_save = pickle.Pickler.save
@@ -24,14 +26,20 @@ def save(self, obj):
 
 pickle.Pickler.save = save
 
-original_perform = zope.fssync.task.Checkout.perform
+original_SyncTask__init__ = zope.fssync.task.SyncTask.__init__
 
-def perform(self, ob, name, location=''):
+def SyncTask__init__(self, *args, **kw):
     """Clear the guards oid cache."""
     gocept.fssyncz2.pickle_.seen.clear()
-    original_perform(self, ob, name, location)
+    original_SyncTask__init__(self, *args, **kw)
 
-zope.fssync.task.Checkout.perform = perform
+zope.fssync.task.SyncTask.__init__ = SyncTask__init__
+
+def getParent(obj):
+    return obj.aq_inner.aq_parent
+
+def getRoot(obj):
+    return Zope2.app()
 
 def convert_string(self, string):
     """Convert a string to a form that can be included in XML text"""
@@ -98,7 +106,7 @@ class SnarfFile(zope.app.fssync.browser.SnarfFile):
         return super(SnarfFile, self).show().read()
 
 
-class SnarfCheckin(zope.app.fssync.browser.SnarfCheckin):
+class SnarfCheckinCommitBase(object):
 
     def check_content_type(self):
         if not self.request.get_header("Content-Type") == "application/x-snarf":
@@ -113,6 +121,24 @@ class SnarfCheckin(zope.app.fssync.browser.SnarfCheckin):
         else:
             self.args = {}
 
+
+class CheckinCommitBase(object):
+
+    def createObject(self, container, name, *args, **kwargs):
+        super(CheckinCommitBase, self).createObject(container, name, *args, **kwargs)
+        return container[name]
+
+
+class Checkin(CheckinCommitBase, zope.fssync.task.Checkin):
+    pass
+
+
+class Commit(CheckinCommitBase, zope.fssync.task.Commit):
+    pass
+
+
+class SnarfCheckin(SnarfCheckinCommitBase, zope.app.fssync.browser.SnarfCheckin):
+
     def run_submission(self):
         stream = self.request.stdin
         snarf = zope.fssync.repository.SnarfRepository(stream)
@@ -121,15 +147,35 @@ class SnarfCheckin(zope.app.fssync.browser.SnarfCheckin):
         return ""
 
 
-class Checkin(zope.fssync.task.Checkin):
+class SnarfCommit(SnarfCheckinCommitBase, zope.app.fssync.browser.SnarfCommit):
 
-    def createObject(self, container, name, *args, **kwargs):
-        super(Checkin, self).createObject(container, name, *args, **kwargs)
-        return container[name]
+    def set_arguments(self):
+        # Compute self.{name, container, fspath} for commit()
+        self.name = zope.traversing.api.getName(self.context)
+        self.container = getParent(self.context)
+        if self.container is None and self.name == "":
+            # Hack to get loading the root to work
+            self.container = getRoot(self.context)
+            self.fspath = 'root'
+        else:
+            self.fspath = self.name
 
+    def get_checker(self, raise_on_conflicts=False):
+        stream = self.request.stdin
+        snarf = zope.fssync.repository.SnarfRepository(stream)
+        return zope.fssync.task.Check(getSynchronizer, snarf,
+                        raise_on_conflicts=raise_on_conflicts)
 
-class SnarfCommit(zope.app.fssync.browser.SnarfCommit):
-    pass
+    def run_submission(self):
+        self.call_checker()
+        if self.errors:
+            return self.send_errors()
+        else:
+	    stream = self.request.stdin
+            snarf = zope.fssync.repository.SnarfRepository(stream)
+            c = Commit(getSynchronizer, snarf)
+            c.perform(self.container, self.name, self.fspath)
+            return self.send_archive()
 
 
 @zope.component.adapter(zope.interface.Interface)
@@ -142,3 +188,5 @@ def EntryId(obj):
         # this case can be triggered for persistent objects that don't
         # have a name in the content space (annotations, extras)
         return None
+
+
