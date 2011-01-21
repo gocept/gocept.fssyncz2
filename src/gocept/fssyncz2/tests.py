@@ -169,7 +169,7 @@ class ReferencesTest(Testing.ZopeTestCase.FunctionalTestCase):
 	self.app['folder']['foo'].my_ref = self.app['folder']['bar']
         response = self.publish(
             '/folder/@@toFS.snarf', basic='manager:asdf')
-	self.assertTrue("doppelt: [\'<File at bar>\'], [\'<File at bar>\']" in response.getBody())
+	self.assertTrue("""doppelt: [\'<File at foo>\', "{\'precondition\': \'\', \'my_ref\': <File at bar>,""" in response.getBody())
 
 
 class FolderTest(Testing.ZopeTestCase.FunctionalTestCase):
