@@ -12,6 +12,7 @@ import zope.fssync.task
 import zope.interface
 import zope.security.proxy
 import zope.xmlpickle.ppml
+import gocept.fssyncz2.pickle_
 
 
 original_save = pickle.Pickler.save
@@ -23,6 +24,14 @@ def save(self, obj):
 
 pickle.Pickler.save = save
 
+original_perform = zope.fssync.task.Checkout.perform
+
+def perform(self, ob, name, location=''):
+    """Clear the guards oid cache."""
+    gocept.fssyncz2.pickle_.seen.clear()
+    original_perform(self, ob, name, location)
+
+zope.fssync.task.Checkout.perform = perform
 
 def convert_string(self, string):
     """Convert a string to a form that can be included in XML text"""
