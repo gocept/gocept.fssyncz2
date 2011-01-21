@@ -1,6 +1,8 @@
+import AccessControl.User
 import OFS.Folder
 import copy_reg
 import zope.fssync.synchronizer
+import persistent
 
 
 class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
@@ -47,6 +49,8 @@ class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
         value._setId(key)
         self.context._setObject(
             key, value, set_owner=False, suppress_events=True)
+        if isinstance(value, AccessControl.User.BasicUserFolder):
+            self.context.__allow_groups__ = value
 
     def __delitem__(self, key):
         """Deletes a folder item.
@@ -72,6 +76,7 @@ class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
     def extras(self):
         extra = self.context.__dict__.copy()
         extra.pop('_objects', None)
+	extra.pop('__allow_groups__', None)
         extra.pop('id', None)
         for key in self.context.objectIds():
             del extra[key]
