@@ -175,7 +175,7 @@ class SnarfCommit(SnarfCheckinCommitBase, zope.app.fssync.browser.SnarfCommit):
             snarf = zope.fssync.repository.SnarfRepository(stream)
             c = Commit(getSynchronizer, snarf)
             c.perform(self.container, self.name, self.fspath)
-            return self.send_archive()
+            return self.send_archive().read()
 
 
 @zope.component.adapter(zope.interface.Interface)

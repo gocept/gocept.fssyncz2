@@ -3,8 +3,10 @@ Products
 bin
 develop-eggs
 downloads
+dump*
 eggs
 parts
 tmp*
 var
 zope.*
+.*.swp
