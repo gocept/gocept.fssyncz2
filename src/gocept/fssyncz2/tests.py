@@ -5,12 +5,16 @@ import StringIO
 import Testing.ZopeTestCase
 import doctest
 import gocept.fssyncz2.testing
+import gocept.fssyncz2.traversing
 import httplib
 import pickle
 import random
 import unittest
 import urllib2
 import zope.testbrowser.browser
+import zope.fssync.tests.test_task
+import zope.fssync.synchronizer
+import os.path
 
 
 class Zope2ObjectsTest(unittest.TestCase):
@@ -429,6 +433,63 @@ Line 03"""
                      response.getBody())
 
 
+class TestCommit(zope.fssync.tests.test_task.TestCheckClass):
+
+    def setup_fssyncz2_changes(self):
+        # provide gocept.fssyncz2 adapters
+        import zope.component
+        zope.component.provideAdapter(
+            gocept.fssyncz2.pickle_.UnwrappedPickler)
+        zope.component.provideAdapter(
+            gocept.fssyncz2.traversing.OFSPhysicallyLocatable)
+
+        # provide adapters for test directories and files
+        zope.component.provideUtility(
+            gocept.fssyncz2.folder.FolderSynchronizer,
+            zope.fssync.interfaces.ISynchronizerFactory,
+            zope.fssync.synchronizer.dottedname(
+                gocept.fssyncz2.testing.PretendContainer))
+        zope.component.provideUtility(
+            gocept.fssyncz2.testing.FileSynchronizer,
+            zope.fssync.interfaces.ISynchronizerFactory,
+            name = zope.fssync.synchronizer.dottedname(
+                zope.fssync.tests.test_task.ExampleFile))
+
+        # create an initial database and repository structure
+        self.base = gocept.fssyncz2.testing.PretendContainer()
+        self.basedir = self.tempdir()
+        self.example_file = self.base['file.txt'] = (
+            zope.fssync.tests.test_task.ExampleFile())
+        self.file_path = os.path.join(self.basedir, 'file.txt')
+        entry = self.getentry(self.file_path)
+        entry["path"] = "/parent/file.txt"
+        entry["factory"] = "fake factory name"
+
+    def test_file_changes_commit_to_the_database(self):
+        self.setup_fssyncz2_changes()
+
+        # write content to file in repo
+        self.writefile('new date', self.file_path)
+
+        # file has content, database not
+        self.assertEquals(
+            open(self.file_path, 'r').readline(), 'new date')
+        self.assertEquals(
+            self.base['file.txt'].data, '')
+
+        # commit changes in repo
+        committer = gocept.fssyncz2.Commit(
+            gocept.fssyncz2.getSynchronizer,
+            self.checker.repository)
+        committer.perform(self.base, "", self.basedir)
+
+        # database is updated
+        self.assertEquals(
+            open(self.file_path, 'r').readline(), 'new date')
+        self.assertEquals(
+            self.base['file.txt'].data, 'new date')
+
+
 def test_suite():
     return unittest.TestSuite(
         (unittest.makeSuite(Zope2ObjectsTest),
@@ -438,5 +499,6 @@ def test_suite():
          unittest.makeSuite(PickleOrderTest),
          unittest.makeSuite(EncodingTest),
          unittest.makeSuite(ReferencesTest),
+         unittest.makeSuite(TestCommit),
          doctest.DocTestSuite('gocept.fssyncz2.folder'),
          ))
