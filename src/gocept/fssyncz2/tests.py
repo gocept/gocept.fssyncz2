@@ -156,7 +156,6 @@ class ReferencesTest(Testing.ZopeTestCase.FunctionalTestCase):
     def setUp(self):
         super(ReferencesTest, self).setUp()
         self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
-
     def test_multiple_references_to_one_object_abort_checkout(self):
         self.app.manage_addFolder('folder')
         self.app['folder'].manage_addFile('foo', '')
