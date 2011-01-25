@@ -158,18 +158,18 @@ class ReferencesTest(Testing.ZopeTestCase.FunctionalTestCase):
         self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
 
     def test_multiple_references_to_one_object_abort_checkout(self):
-	self.app.manage_addFolder('folder')
+        self.app.manage_addFolder('folder')
         self.app['folder'].manage_addFile('foo', '')
         self.app['folder'].manage_addFile('bar', '')
         response = self.publish(
             '/folder/@@toFS.snarf', basic='manager:asdf')
-	body = response.getBody()
-	self.assertTrue('foo' in body)
-	self.assertTrue('bar' in body)
-	self.app['folder']['foo'].my_ref = self.app['folder']['bar']
+        body = response.getBody()
+        self.assertTrue('foo' in body)
+        self.assertTrue('bar' in body)
+        self.app['folder']['foo'].my_ref = self.app['folder']['bar']
         response = self.publish(
             '/folder/@@toFS.snarf', basic='manager:asdf')
-	self.assertTrue("""doppelt: [\'<File at foo>\', "{\'precondition\': \'\', \'my_ref\': <File at bar>,""" in response.getBody())
+        self.assertTrue("""doppelt: [\'<File at foo>\', "{\'precondition\': \'\', \'my_ref\': <File at bar>,""" in response.getBody())
 
 
 class FolderTest(Testing.ZopeTestCase.FunctionalTestCase):
@@ -428,6 +428,7 @@ Line 03"""
         response = self.publish('/object/@@toFS.snarf', basic='manager:asdf')
         self.assert_('<string>Line 01\nLine 02\nLine 03</string>' in
                      response.getBody())
+
 
 def test_suite():
     return unittest.TestSuite(
