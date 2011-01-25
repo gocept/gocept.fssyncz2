@@ -6,6 +6,8 @@ import random
 import re
 import time
 import zope.fssync.snarf
+import zope.fssync.tests.test_task
+import zope.fssync.synchronizer
 
 
 class Lines(StringIO.StringIO):
@@ -45,6 +47,26 @@ def grep(pattern, lines, sort=False):
     if sort:
         lines = sorted(lines)
     return ''.join(lines)
+
+
+class PretendContainer(zope.fssync.tests.test_task.PretendContainer):
+
+    def objectItems(self):
+        return self.holding.iteritems()
+
+    def objectIds(self):
+        return self.holding.keys()
+
+
+class FileSynchronizer(zope.fssync.synchronizer.FileSynchronizer):
+    """A convenient base class for file serializers."""
+
+    def dump(self, writeable):
+        writeable.write(self.context.data)
+
+    def load(self, readable):
+        self.context.data = readable.read()
+
 
 
 class Zope2FunctionalLayer(object):
