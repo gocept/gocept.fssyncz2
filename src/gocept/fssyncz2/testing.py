@@ -49,7 +49,16 @@ def grep(pattern, lines, sort=False):
     return ''.join(lines)
 
 
+class ExampleFile(zope.fssync.tests.test_task.ExampleFile):
+
+    def _setId(self, key):
+        self.id = key
+
+
 class PretendContainer(zope.fssync.tests.test_task.PretendContainer):
+
+    def _setObject(self, key, value, **kw):
+        self[key] = value
 
     def objectItems(self):
         return self.holding.iteritems()
