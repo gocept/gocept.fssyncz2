@@ -60,6 +60,9 @@ class PretendContainer(zope.fssync.tests.test_task.PretendContainer):
     def _setObject(self, key, value, **kw):
         self[key] = value
 
+    def _delObject(self, key, **kw):
+        del self[key]
+
     def objectItems(self):
         return self.holding.iteritems()
 

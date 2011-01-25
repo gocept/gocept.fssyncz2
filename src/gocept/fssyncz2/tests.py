@@ -463,14 +463,14 @@ class TestCommit(zope.fssync.tests.test_task.TestCheckClass):
         self.setup_fssyncz2_changes()
 
         # add a new file to the repo
-        self.file2_path = os.path.join(self.basedir, 'file2.txt')
-        open(self.file2_path, 'w').write('test')
-        entry = self.getentry(self.file2_path)
-        entry["path"] = "/parent/file2.txt"
+        self.file_path = os.path.join(self.basedir, 'add_me.txt')
+        open(self.file_path, 'w').write('test')
+        entry = self.getentry(self.file_path)
+        entry["path"] = "/parent/add_me.txt"
         entry["factory"] = "gocept.fssyncz2.testing.ExampleFile"
 
         # file is not in the database
-        self.assertRaises(KeyError, self.base.__getitem__, 'file2.txt')
+        self.assertRaises(KeyError, self.base.__getitem__, 'add_me.txt')
 
         # commit changes in repo (add the file to the db)
         committer = gocept.fssyncz2.Commit(
@@ -480,17 +480,17 @@ class TestCommit(zope.fssync.tests.test_task.TestCheckClass):
 
         # file is added and has content
         self.assertEquals(
-            self.base['file2.txt'].data, 'test')
+            self.base['add_me.txt'].data, 'test')
 
     def test_file_changes_commit_to_the_database(self):
         self.setup_fssyncz2_changes()
         # add a file which is changed in the test
-        self.example_file = self.base['file.txt'] = (
+        self.example_file = self.base['update_me.txt'] = (
             gocept.fssyncz2.testing.ExampleFile())
-        self.file_path = os.path.join(self.basedir, 'file.txt')
+        self.file_path = os.path.join(self.basedir, 'update_me.txt')
         entry = self.getentry(self.file_path)
-        entry["path"] = "/parent/file.txt"
-        entry["factory"] = "fake factory name"
+        entry["path"] = "/parent/update_me.txt"
+        entry["factory"] = "gocept.fssyncz2.testing.ExampleFile"
 
         # write content to file in repo
         self.writefile('new date', self.file_path)
@@ -499,7 +499,7 @@ class TestCommit(zope.fssync.tests.test_task.TestCheckClass):
         self.assertEquals(
             open(self.file_path, 'r').readline(), 'new date')
         self.assertEquals(
-            self.base['file.txt'].data, '')
+            self.base['update_me.txt'].data, '')
 
         # commit changes in repo
         committer = gocept.fssyncz2.Commit(
@@ -511,7 +511,40 @@ class TestCommit(zope.fssync.tests.test_task.TestCheckClass):
         self.assertEquals(
             open(self.file_path, 'r').readline(), 'new date')
         self.assertEquals(
-            self.base['file.txt'].data, 'new date')
+            self.base['update_me.txt'].data, 'new date')
+
+    def test_file_is_deleted_in_database_during_commit(self):
+        self.setup_fssyncz2_changes()
+        # add a file which is deleted in the test
+        self.example_file = self.base['delete_me.txt'] = (
+            gocept.fssyncz2.testing.ExampleFile())
+        self.file_path = os.path.join(self.basedir, 'delete_me.txt')
+        open(self.file_path, 'w').write('')
+        entry = self.getentry(self.file_path)
+        entry["path"] = "/parent/delete_me.txt"
+        entry["factory"] = "gocept.fssyncz2.testing.ExampleFile"
+
+        # file is in repo and database
+        self.assertEquals(
+            open(self.file_path, 'r').read(), '')
+        self.assertEquals(
+            self.base['delete_me.txt'].data, '')
+
+        # delete file in the repo
+        os.remove(self.file_path)
+        entry = self.getentry(self.file_path)
+        entry["flag"] = "removed"
+        self.assertRaises(IOError, open, self.file_path, 'r')
+
+        # commit changes in repo
+        committer = gocept.fssyncz2.Commit(
+            gocept.fssyncz2.getSynchronizer,
+            self.checker.repository)
+        committer.perform(self.base, "", self.basedir)
+
+        # file is not in db and repo
+        self.assertRaises(IOError, open, self.file_path, 'r')
+        self.assertRaises(KeyError, self.base.__getitem__, 'delete_me.txt')
 
 
 def test_suite():
