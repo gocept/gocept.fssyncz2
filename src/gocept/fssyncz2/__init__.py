@@ -171,7 +171,7 @@ class SnarfCommit(SnarfCheckinCommitBase, zope.app.fssync.browser.SnarfCommit):
         if self.errors:
             return self.send_errors()
         else:
-	    stream = self.request.stdin
+            stream = self.request.stdin
             snarf = zope.fssync.repository.SnarfRepository(stream)
             c = Commit(getSynchronizer, snarf)
             c.perform(self.container, self.name, self.fspath)
