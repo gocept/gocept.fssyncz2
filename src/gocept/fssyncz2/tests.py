@@ -453,20 +453,44 @@ class TestCommit(zope.fssync.tests.test_task.TestCheckClass):
             gocept.fssyncz2.testing.FileSynchronizer,
             zope.fssync.interfaces.ISynchronizerFactory,
             name = zope.fssync.synchronizer.dottedname(
-                zope.fssync.tests.test_task.ExampleFile))
+                gocept.fssyncz2.testing.ExampleFile))
 
         # create an initial database and repository structure
         self.base = gocept.fssyncz2.testing.PretendContainer()
         self.basedir = self.tempdir()
+
+    def test_new_file_is_added_to_database(self):
+        self.setup_fssyncz2_changes()
+
+        # add a new file to the repo
+        self.file2_path = os.path.join(self.basedir, 'file2.txt')
+        open(self.file2_path, 'w').write('test')
+        entry = self.getentry(self.file2_path)
+        entry["path"] = "/parent/file2.txt"
+        entry["factory"] = "gocept.fssyncz2.testing.ExampleFile"
+
+        # file is not in the database
+        self.assertRaises(KeyError, self.base.__getitem__, 'file2.txt')
+
+        # commit changes in repo (add the file to the db)
+        committer = gocept.fssyncz2.Commit(
+            gocept.fssyncz2.getSynchronizer,
+            self.checker.repository)
+        committer.perform(self.base, "", self.basedir)
+
+        # file is added and has content
+        self.assertEquals(
+            self.base['file2.txt'].data, 'test')
+
+    def test_file_changes_commit_to_the_database(self):
+        self.setup_fssyncz2_changes()
+        # add a file which is changed in the test
         self.example_file = self.base['file.txt'] = (
-            zope.fssync.tests.test_task.ExampleFile())
+            gocept.fssyncz2.testing.ExampleFile())
         self.file_path = os.path.join(self.basedir, 'file.txt')
         entry = self.getentry(self.file_path)
         entry["path"] = "/parent/file.txt"
         entry["factory"] = "fake factory name"
-
-    def test_file_changes_commit_to_the_database(self):
-        self.setup_fssyncz2_changes()
 
         # write content to file in repo
         self.writefile('new date', self.file_path)
