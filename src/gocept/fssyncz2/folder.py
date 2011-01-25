@@ -76,12 +76,13 @@ class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
     def extras(self):
         extra = self.context.__dict__.copy()
         extra.pop('_objects', None)
-	extra.pop('__allow_groups__', None)
+        extra.pop('__allow_groups__', None)
         extra.pop('id', None)
         for key in self.context.objectIds():
             del extra[key]
-	for k, v in extra.items():
-	    if isinstance(v, persistent.Persistent) or isinstance(k, persistent.Persistent):
+        for k, v in extra.items():
+            if (isinstance(v, persistent.Persistent) or
+                isinstance(k, persistent.Persistent)):
                 raise RuntimeError('Persistent object in Extras found: %s: %s' % (k,v))
         return zope.fssync.synchronizer.Extras(attributes=extra)
 
