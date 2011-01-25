@@ -433,6 +433,46 @@ Line 03"""
                      response.getBody())
 
 
+class UserFolderTest(Testing.ZopeTestCase.FunctionalTestCase):
+
+    layer = gocept.fssyncz2.testing.server_layer
+
+    def setUp(self):
+        Testing.ZopeTestCase.ZopeTestCase.setUp(self)
+        self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
+        self.app.manage_addFolder('folder')
+        self.app['folder'].manage_addProduct['OFSP'].manage_addUserFolder()
+        import transaction
+        transaction.commit()
+        import tempfile
+        self.tempdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tempdir)
+
+    def test_userfolder_is_not_duplicated_after_checkout_checkin(self):
+        self.assertTrue(self.app['folder'].__allow_groups__.aq_base is
+                        self.app['folder']['acl_users'].aq_base)
+
+        import zope.app.fssync.main
+        zope.app.fssync.main.checkout([], [
+            'http://manager:asdf@localhost:%s/folder' % self.layer.port,
+            self.tempdir])
+        self.assertNotEquals(len(os.listdir(self.tempdir)), 0)
+        self.app._delObject('folder')
+        import zope.fssync.fsutil
+        try:
+            zope.app.fssync.main.checkin([], [
+                'http://manager:asdf@localhost:%s/folder' % self.layer.port,
+                '%s/folder' % self.tempdir])
+        except zope.fssync.fsutil.Error:
+            # XXX: whf?!
+            pass
+        self.assertTrue(self.app['folder'].__allow_groups__.aq_base is
+                        self.app['folder']['acl_users'].aq_base)
+
+
 class TestCommit(zope.fssync.tests.test_task.TestCheckClass):
 
     def setup_fssyncz2_changes(self):
@@ -556,6 +596,7 @@ def test_suite():
          unittest.makeSuite(PickleOrderTest),
          unittest.makeSuite(EncodingTest),
          unittest.makeSuite(ReferencesTest),
+         unittest.makeSuite(UserFolderTest),
          unittest.makeSuite(TestCommit),
          doctest.DocTestSuite('gocept.fssyncz2.folder'),
          ))
