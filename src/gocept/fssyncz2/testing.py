@@ -8,6 +8,7 @@ import time
 import zope.fssync.snarf
 import zope.fssync.tests.test_task
 import zope.fssync.synchronizer
+import Testing.ZopeTestCase.utils
 
 
 class Lines(StringIO.StringIO):
@@ -102,7 +103,7 @@ class Zope2ServerLayer(Zope2FunctionalLayer):
         super(Zope2ServerLayer, self).setUp()
         # We need to access the Zope2 server from outside in order to see
         # effects related to security proxies.
-        self.startZServer()
+        Testing.ZopeTestCase.utils.startZServer()
 
     @property
     def host(self):
@@ -111,22 +112,6 @@ class Zope2ServerLayer(Zope2FunctionalLayer):
     @property
     def port(self):
         return Testing.ZopeTestCase.utils._Z2PORT
-
-    def startZServer(self):
-        if self.host is not None:
-            return
-        host = '127.0.0.1'
-        port = random.choice(range(55000, 55500))
-        from Testing.ZopeTestCase.threadutils import setNumberOfThreads
-        setNumberOfThreads(5)
-        from Testing.ZopeTestCase.threadutils import QuietThread, zserverRunner
-        t = QuietThread(target=zserverRunner, args=(host, port, None))
-        t.setDaemon(1)
-        t.start()
-        time.sleep(0.1)  # Sandor Palfy
-
-        Testing.ZopeTestCase.utils._Z2HOST = host
-        Testing.ZopeTestCase.utils._Z2PORT = port
 
     def tearDown(self):
         Lifetime.shutdown(0, fast=1)

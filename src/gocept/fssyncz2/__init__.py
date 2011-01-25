@@ -13,7 +13,7 @@ import zope.interface
 import zope.security.proxy
 import zope.xmlpickle.ppml
 import gocept.fssyncz2.pickle_
-import zope.traversing.api
+import zope.traversing.interfaces
 import Zope2
 
 
@@ -29,17 +29,12 @@ pickle.Pickler.save = save
 original_SyncTask__init__ = zope.fssync.task.SyncTask.__init__
 
 def SyncTask__init__(self, *args, **kw):
-    """Clear the guards oid cache."""
+    """Clear the guards oid cache and path."""
     gocept.fssyncz2.pickle_.seen.clear()
+    gocept.fssyncz2.pickle_.path[:] = []
     original_SyncTask__init__(self, *args, **kw)
 
 zope.fssync.task.SyncTask.__init__ = SyncTask__init__
-
-def getParent(obj):
-    return obj.aq_inner.aq_parent
-
-def getRoot(obj):
-    return Zope2.app()
 
 def convert_string(self, string):
     """Convert a string to a form that can be included in XML text"""
@@ -73,7 +68,8 @@ zope.xmlpickle.ppml.unconvert_string = unconvert_string
 
 def unconvert_unicode(encoding, string):
     if encoding == 'unicode_escape':
-        string = string.encode('ascii').decode('unicode_escape').encode('utf-8')
+        string = string.encode(
+            'ascii').decode('unicode_escape').encode('utf-8')
     elif encoding:
         raise ValueError('bad encoding', encoding)
     return string
@@ -82,6 +78,7 @@ zope.xmlpickle.ppml.unconvert_unicode = unconvert_unicode
 
 
 def getSynchronizer(obj, raise_error=True):
+    # Monkey Patch: Remove Zope3 security proxy wrapping
     dn = zope.fssync.synchronizer.dottedname(obj.__class__)
 
     factory = zope.component.queryUtility(
@@ -93,9 +90,7 @@ def getSynchronizer(obj, raise_error=True):
         if raise_error:
             raise zope.fssync.synchronizer.MissingSynchronizer(dn)
         return None
-
     return factory(obj)
-
 
 zope.app.fssync.syncer.getSynchronizer = getSynchronizer
 
@@ -103,28 +98,14 @@ zope.app.fssync.syncer.getSynchronizer = getSynchronizer
 class SnarfFile(zope.app.fssync.browser.SnarfFile):
 
     def show(self):
+        # XXX decorate
         return super(SnarfFile, self).show().read()
-
-
-class SnarfCheckinCommitBase(object):
-
-    def check_content_type(self):
-        if not self.request.get_header("Content-Type") == "application/x-snarf":
-            raise ValueError(_("Content-Type is not application/x-snarf"))
-
-    def parse_args(self):
-        # The query string in the URL didn't get parsed, because we're
-        # getting a POST request with an unrecognized content-type
-        qs = self.request.environ.get("QUERY_STRING")
-        if qs:
-            self.args = cgi.parse_qs(qs)
-        else:
-            self.args = {}
 
 
 class CheckinCommitBase(object):
 
     def createObject(self, container, name, *args, **kwargs):
+        # Monkey Patch: Acquisition wrap
         super(CheckinCommitBase, self).createObject(container, name, *args, **kwargs)
         return container[name]
 
@@ -137,7 +118,23 @@ class Commit(CheckinCommitBase, zope.fssync.task.Commit):
     pass
 
 
+class SnarfCheckinCommitBase(object):
+    """Monkey Patch: Zope2 request behaviour."""
+
+    def check_content_type(self):
+        if not self.request.get_header("Content-Type") == "application/x-snarf":
+            raise ValueError(_("Content-Type is not application/x-snarf"))
+
+    def parse_args(self):
+        qs = self.request.environ.get("QUERY_STRING")
+        if qs:
+            self.args = cgi.parse_qs(qs)
+        else:
+            self.args = {}
+
+
 class SnarfCheckin(SnarfCheckinCommitBase, zope.app.fssync.browser.SnarfCheckin):
+    """Monkey Patch: Zope2 request behaviour."""
 
     def run_submission(self):
         stream = self.request.stdin
@@ -150,23 +147,25 @@ class SnarfCheckin(SnarfCheckinCommitBase, zope.app.fssync.browser.SnarfCheckin)
 class SnarfCommit(SnarfCheckinCommitBase, zope.app.fssync.browser.SnarfCommit):
 
     def set_arguments(self):
-        # Compute self.{name, container, fspath} for commit()
-        self.name = zope.traversing.api.getName(self.context)
-        self.container = getParent(self.context)
+        # Monkey Patch: Inject IPhysicallyLocatable (thx zope.traversing.api)
+        context = zope.traversing.interfaces.IPhysicallyLocatable(obj)
+        self.name = context.getName()
+        self.container = context.getParent()
         if self.container is None and self.name == "":
-            # Hack to get loading the root to work
-            self.container = getRoot(self.context)
+            self.container = context.getRoot()
             self.fspath = 'root'
         else:
             self.fspath = self.name
 
     def get_checker(self, raise_on_conflicts=False):
+        # Monkey Patch: Zope2 request
         stream = self.request.stdin
         snarf = zope.fssync.repository.SnarfRepository(stream)
         return zope.fssync.task.Check(getSynchronizer, snarf,
                         raise_on_conflicts=raise_on_conflicts)
 
     def run_submission(self):
+        # XXX decorate
         self.call_checker()
         if self.errors:
             return self.send_errors()
@@ -181,12 +180,13 @@ class SnarfCommit(SnarfCheckinCommitBase, zope.app.fssync.browser.SnarfCommit):
 @zope.component.adapter(zope.interface.Interface)
 @zope.interface.implementer(zope.fssync.interfaces.IEntryId)
 def EntryId(obj):
+    # Copied from: zope.fssync.task.py
+    # Monkey Patch: zope.traversing (again...)
     try:
-        path = obj.absolute_url_path()
+        path = '/'.join(
+            zope.traversing.interfaces.IPhysicallyLocatable(obj).getPath())
         return path.encode('utf-8')
     except (TypeError, KeyError, AttributeError):
         # this case can be triggered for persistent objects that don't
         # have a name in the content space (annotations, extras)
         return None
-
-

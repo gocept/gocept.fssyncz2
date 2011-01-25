@@ -76,18 +76,25 @@ class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
     def extras(self):
         extra = self.context.__dict__.copy()
         extra.pop('_objects', None)
-        extra.pop('__allow_groups__', None)
+        # Duplicated UserFolder, is added in __setitem__
+        extra.pop('__allow_groups__', None) 
         extra.pop('id', None)
         for key in self.context.objectIds():
             del extra[key]
-        for k, v in extra.items():
-            if (isinstance(v, persistent.Persistent) or
-                isinstance(k, persistent.Persistent)):
-                raise RuntimeError('Persistent object in Extras found: %s: %s' % (k,v))
+        self._prevent_persistent(extra)
         return zope.fssync.synchronizer.Extras(attributes=extra)
 
     def setextras(self, extras):
         self.context.__dict__.update(extras['attributes'])
+
+    def _prevent_persistent(self, dictionary):
+        # If there are persistent objects in the extras, we suspect them to be
+        # duplicates of objects referenced elsewhere.
+        for key, value in dictionary.items():
+            if (isinstance(value, persistent.Persistent) or
+                isinstance(key, persistent.Persistent)):
+                raise RuntimeError(
+                    'Persistent object in Extras found: %s: %s' % (key,value))
 
 
 def reduce(self):
