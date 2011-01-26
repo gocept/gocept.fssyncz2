@@ -148,7 +148,7 @@ class SnarfCommit(SnarfCheckinCommitBase, zope.app.fssync.browser.SnarfCommit):
 
     def set_arguments(self):
         # Monkey Patch: Inject IPhysicallyLocatable (thx zope.traversing.api)
-        context = zope.traversing.interfaces.IPhysicallyLocatable(obj)
+        context = zope.traversing.interfaces.IPhysicallyLocatable(self.context)
         self.name = context.getName()
         self.container = context.getParent()
         if self.container is None and self.name == "":
