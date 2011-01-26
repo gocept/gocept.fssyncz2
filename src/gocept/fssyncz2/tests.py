@@ -18,6 +18,7 @@ import zope.app.fssync.main
 import os.path
 import lxml
 import pyquery
+import transaction
 
 
 class Zope2ObjectsTest(unittest.TestCase):
@@ -579,6 +580,80 @@ class RoundTripTest(BaseFileSystemTests):
         self.assertEquals(self.app['base']['sub']['baz'].data, '')
 
 
+class SanityCheckTest(BaseFileSystemTests):
+    """Some sanity checks for checkout, commit, update and checkin."""
+
+    def _checkout_checkin(self):
+        zope.app.fssync.main.checkout([], [
+            'http://manager:asdf@localhost:%s/base' % self.layer.port,
+            self.repository])
+        self.layer.tearDown()
+        self.layer.setUp()
+        self._clean_checkin([], [
+            'http://manager:asdf@localhost:%s/base' % self.layer.port,
+            '%s/base' % self.repository])
+        transaction.commit()
+
+    def test_checkout_checkin_amount_of_objects_equal(self):
+        import testing
+        import zope.component
+        import ZODB.DemoStorage
+        zope.component.provideAdapter(
+            testing.FileStorageOIDs,
+            (ZODB.DemoStorage.DemoStorage, ),
+            testing.IOIDLoader)
+        transaction.commit()
+        initial_items = list(iter(testing.DatabaseIterator(self.app._p_jar)))
+        self.assertEquals(len(initial_items), 12)
+        self._checkout_checkin()
+        new_items = list(iter(testing.DatabaseIterator(self.app._p_jar)))
+        self.assertEquals(len(initial_items), len(new_items))
+
+    def test_repositories_are_equal_after_checkout_checkin_checkout(self):
+        def parse_cmpdir_output(dir):
+            # path to the folder
+            path = '/'.join(dir.left.split('/')[2:])
+            # files, which are only in one folder
+            diff_folder = dir.left_only + dir.right_only
+            # files, which are in both folders, but which have diff. content
+            diff_files = dir.diff_files
+            data = [dict(path=path,
+                         diff_folder=diff_folder,
+                         diff_files=diff_files)]
+            for subdir in dir.subdirs.values():
+                data.extend(parse_cmpdir_output(subdir))
+            return data
+
+        # create second repository
+        import tempfile
+        self.repository2 = tempfile.mkdtemp()
+
+        # checkout in first repository
+        self._checkout_checkin()
+
+        # check that repositories do not match
+        import filecmp
+        folder_stats = parse_cmpdir_output(
+            filecmp.dircmp(self.repository, self.repository2))
+        self.assertEquals(len(folder_stats), 1)
+        stat = folder_stats[0]
+        self.assertEquals(stat['diff_files'], [])
+        self.assertEquals(stat['diff_folder'], ['@@Zope', 'base'])
+
+        # checkout in second repository
+        zope.app.fssync.main.checkout([], [
+            'http://manager:asdf@localhost:%s/base' % self.layer.port,
+            self.repository2])
+
+        # check that both repositories match
+        folder_stats = parse_cmpdir_output(
+            filecmp.dircmp(self.repository, self.repository2))
+        self.assertEquals(len(folder_stats), 16)
+        for stat in folder_stats:
+            self.assertEquals(stat['diff_files'], [])
+            self.assertEquals(stat['diff_folder'], [])
+
+
 def test_suite():
     return unittest.TestSuite(
         (unittest.makeSuite(Zope2ObjectsTest),
@@ -589,5 +664,6 @@ def test_suite():
          unittest.makeSuite(ReferencesTest),
          unittest.makeSuite(UserFolderTest),
          unittest.makeSuite(RoundTripTest),
+         unittest.makeSuite(SanityCheckTest),
          doctest.DocTestSuite('gocept.fssyncz2.folder'),
          ))

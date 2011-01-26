@@ -86,3 +86,62 @@ class Zope2ServerLayer(Zope2FunctionalLayer):
 
 
 server_layer = Zope2ServerLayer()
+
+
+# gocept.zodb.dbiterator
+# This is copied from Steppkes. If it makes eggified to the pypi some day,
+# delete this code and use the egg instead
+
+import logging
+from zope.interface import Interface, implements
+from ZODB.POSException import POSKeyError
+from ZODB.utils import oid_repr
+
+
+class IDatabaseIterator(Interface):
+
+    def __iter__():
+        """Iterates over all objects in database."""
+
+
+class IOIDLoader(Interface):
+    """Provide the capability to retrieve all oids from a storage."""
+
+    def getOIDs():
+        """Return an iterable of all oids."""
+
+
+class FileStorageOIDs(object):
+    """Provide the capability to retrieve all oids from a file storage."""
+    implements(IOIDLoader)
+
+    def __init__(self, storage):
+        self.storage = storage
+
+    def getOIDs(self):
+        """Return an iterable of all oids."""
+        return self.storage._index.keys()
+
+
+class DatabaseIterator(object):
+    """Iterator usable for a FileStorage."""
+    implements(IDatabaseIterator)
+
+    def __init__(self, connection):
+        self.connection = connection
+
+    def __iter__(self):
+        """Iterates over all objects in database."""
+        storage = self.connection._storage
+        oid_loader = IOIDLoader(storage)
+        for oid in oid_loader.getOIDs():
+            try:
+                object = self.connection.get(oid)
+            except POSKeyError:
+                # XXX warg. For some reason the oids we get back might refer
+                # to non-existing objects, although the database seems consistent.
+                log = logging.getLogger("gocept.zodb")
+                log.warn("Found POSKeyError while iterating over database. "
+                    "OID: %s" % oid_repr(oid))
+                continue
+            yield object
