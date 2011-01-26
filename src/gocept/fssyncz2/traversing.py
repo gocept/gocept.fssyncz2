@@ -13,6 +13,9 @@ class OFSPhysicallyLocatable(object):
     def __init__(self, context):
         self.context = context
 
+    def getParent(self):
+        return self.context.aq_inner.aq_parent
+
     def getRoot(self):
         return self.context.getPhysicalRoot()
 
