@@ -13,5 +13,7 @@ setup(name='gocept.fssyncz2',
           'setuptools',
 #          'Zope2',
           'zope.app.fssync',
+	  'lxml',
+          'pyquery',
           ],
       )

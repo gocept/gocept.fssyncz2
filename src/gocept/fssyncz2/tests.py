@@ -14,7 +14,10 @@ import urllib2
 import zope.testbrowser.browser
 import zope.fssync.tests.test_task
 import zope.fssync.synchronizer
+import zope.app.fssync.main
 import os.path
+import lxml
+import pyquery
 
 
 class Zope2ObjectsTest(unittest.TestCase):
@@ -459,118 +462,127 @@ class UserFolderTest(Testing.ZopeTestCase.FunctionalTestCase):
                         self.app['folder']['acl_users'].aq_base)
 
 
-class TestCommit(zope.fssync.tests.test_task.TestCheckClass):
+class TestRoundTrip(Testing.ZopeTestCase.FunctionalTestCase):
+    """Test the data integrity during checkout, commit, update and checkin."""
 
-    def setup_fssyncz2_changes(self):
-        # provide gocept.fssyncz2 adapters
-        import zope.component
-        zope.component.provideAdapter(
-            gocept.fssyncz2.pickle_.UnwrappedPickler)
-        zope.component.provideAdapter(
-            gocept.fssyncz2.traversing.OFSPhysicallyLocatable)
+    layer = gocept.fssyncz2.testing.server_layer
 
-        # provide adapters for test directories and files
-        zope.component.provideUtility(
-            gocept.fssyncz2.folder.FolderSynchronizer,
-            zope.fssync.interfaces.ISynchronizerFactory,
-            zope.fssync.synchronizer.dottedname(
-                gocept.fssyncz2.testing.PretendContainer))
-        zope.component.provideUtility(
-            gocept.fssyncz2.testing.FileSynchronizer,
-            zope.fssync.interfaces.ISynchronizerFactory,
-            name = zope.fssync.synchronizer.dottedname(
-                gocept.fssyncz2.testing.ExampleFile))
+    def setUp(self):
+        Testing.ZopeTestCase.ZopeTestCase.setUp(self)
+        self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
 
-        # create an initial database and repository structure
-        self.base = gocept.fssyncz2.testing.PretendContainer()
-        self.basedir = self.tempdir()
+        # initial data structure
+        self.app.manage_addFolder('base')
+        self.app['base'].manage_addFolder('sub')
+        self.app['base'].manage_addFile('foo', 'Content of foo')
+        self.app['base'].manage_addFile('bar', 'Content of bar')
+        self.app['base']['sub'].manage_addFile('baz', '')
+        import tempfile
+        self.repository = tempfile.mkdtemp()
 
-    def test_new_file_is_added_to_database(self):
-        self.setup_fssyncz2_changes()
+    def _get_file_content(self, path):
+        xml = open('%s/%s' % (self.repository, path), 'r').read()
+        return pyquery.PyQuery(lxml.etree.fromstring(xml))
 
-        # add a new file to the repo
-        self.file_path = os.path.join(self.basedir, 'add_me.txt')
-        open(self.file_path, 'w').write('test')
-        entry = self.getentry(self.file_path)
-        entry["path"] = "/parent/add_me.txt"
-        entry["factory"] = "gocept.fssyncz2.testing.ExampleFile"
+    def _read_file_content(self, path):
+        pq = self._get_file_content(path)
+        return pq('item[key=data] string')[0].text
 
-        # file is not in the database
-        self.assertRaises(KeyError, self.base.__getitem__, 'add_me.txt')
+    def _write_file_content(self, path, content):
+        pq = self._get_file_content(path)
+        setattr(pq('item[key=data] string')[0], 'text', content)
+        xml = '<?xml version="1.0" encoding="utf-8" ?>\n%s' % (
+            lxml.etree.tostring(pq[0]))
+        return open('%s/%s' % (self.repository, path), 'w').write(xml)
 
-        # commit changes in repo (add the file to the db)
-        committer = gocept.fssyncz2.Commit(
-            gocept.fssyncz2.getSynchronizer,
-            self.checker.repository)
-        committer.perform(self.base, "", self.basedir)
+    def test_checkout(self):
+        # checkout the repository and check the data integrity
+        zope.app.fssync.main.checkout([], [
+            'http://manager:asdf@localhost:%s/base' % self.layer.port,
+            self.repository])
+        self.assertEquals(os.listdir(self.repository), ['base', '@@Zope'])
+        self.assertEquals(os.listdir('%s/base' % self.repository),
+                          ['sub', 'bar', 'foo', '@@Zope'])
+        self.assertEquals(os.listdir('%s/base/sub' % self.repository),
+                          ['baz', '@@Zope'])
 
-        # file is added and has content
+    def _add_flag(self, base_path, file, flag):
+        meta_path = '%s/%s/@@Zope/Entries.xml' % (self.repository, base_path)
+        xml = lxml.etree.fromstring(open(meta_path, 'r').read())
+        pq = pyquery.PyQuery(xml)
+        if pq('entry[name=%s]' % file):
+            pq('entry[name=%s]' % file)[0].set('flag', flag)
+        else:
+            xml.append(lxml.etree.fromstring("""
+                <entry name="%(name)s"
+                  keytype="__builtin__.str"
+                  type="OFS.Image.File"
+                  id="/%(path)s/%(name)s"
+                  flag="%(flag)s"
+                />""" % dict(name=file, path=base_path, flag=flag)))
+        open(meta_path, 'w').write(lxml.etree.tostring(xml))
+
+    def test_commit(self):
+        # test that changes to a file are committed to the database and
+        # that files are added and deleted
+        self.assertEquals(self.app['base']['bar'].data, 'Content of bar')
+        zope.app.fssync.main.checkout([], [
+            'http://manager:asdf@localhost:%s/base' % self.layer.port,
+            self.repository])
+        # change the content of bar
+        self._write_file_content('base/bar', 'asdf')
+        # add baz
+        baz_template = open(os.path.join(
+            os.path.dirname(gocept.fssyncz2.__file__), 'testdata', 'baz'))
+        open('%s/base/baz' % self.repository, 'w').write(baz_template.read())
+        self._add_flag('base', 'baz', 'added')
+        # delete foo
+        os.remove('%s/base/foo' % self.repository)
+        self._add_flag('base', 'foo', 'removed')
+        zope.app.fssync.main.commit([], ['%s/base' % self.repository])
+        self.assertEquals(self.app['base']['bar'].data, 'asdf')
+        self.assertEquals(self.app['base']['baz'].data, 'Content of baz')
+        self.assertRaises(KeyError, self.app['base'].__getitem__, 'foo')
+
+    def test_update(self):
+        # test that changes to file are updated to the repository and
+        # that files are added and deleted
+        zope.app.fssync.main.checkout([], [
+            'http://manager:asdf@localhost:%s/base' % self.layer.port,
+            self.repository])
+        # change the content of foo
         self.assertEquals(
-            self.base['add_me.txt'].data, 'test')
-
-    def test_file_changes_commit_to_the_database(self):
-        self.setup_fssyncz2_changes()
-        # add a file which is changed in the test
-        self.example_file = self.base['update_me.txt'] = (
-            gocept.fssyncz2.testing.ExampleFile())
-        self.file_path = os.path.join(self.basedir, 'update_me.txt')
-        entry = self.getentry(self.file_path)
-        entry["path"] = "/parent/update_me.txt"
-        entry["factory"] = "gocept.fssyncz2.testing.ExampleFile"
-
-        # write content to file in repo
-        self.writefile('new date', self.file_path)
-
-        # file has content, database not
+            self._read_file_content('base/foo'), 'Content of foo')
+        # delete bar
+        self.app['base']._delObject('bar')
+        self.app['base']['foo'].data = 'asdf'
+        # add baz in base
+        self.app['base'].manage_addFile('baz', 'Content of baz')
+        # update
+        zope.app.fssync.main.update([], ['%s/base' % self.repository])
         self.assertEquals(
-            open(self.file_path, 'r').readline(), 'new date')
+            self._read_file_content('base/foo'), 'asdf')
+        self.assertRaises(IOError, self._read_file_content, 'base/base')
         self.assertEquals(
-            self.base['update_me.txt'].data, '')
+            self._read_file_content('base/baz'), 'Content of baz')
 
-        # commit changes in repo
-        committer = gocept.fssyncz2.Commit(
-            gocept.fssyncz2.getSynchronizer,
-            self.checker.repository)
-        committer.perform(self.base, "", self.basedir)
-
-        # database is updated
-        self.assertEquals(
-            open(self.file_path, 'r').readline(), 'new date')
-        self.assertEquals(
-            self.base['update_me.txt'].data, 'new date')
-
-    def test_file_is_deleted_in_database_during_commit(self):
-        self.setup_fssyncz2_changes()
-        # add a file which is deleted in the test
-        self.example_file = self.base['delete_me.txt'] = (
-            gocept.fssyncz2.testing.ExampleFile())
-        self.file_path = os.path.join(self.basedir, 'delete_me.txt')
-        open(self.file_path, 'w').write('')
-        entry = self.getentry(self.file_path)
-        entry["path"] = "/parent/delete_me.txt"
-        entry["factory"] = "gocept.fssyncz2.testing.ExampleFile"
-
-        # file is in repo and database
-        self.assertEquals(
-            open(self.file_path, 'r').read(), '')
-        self.assertEquals(
-            self.base['delete_me.txt'].data, '')
-
-        # delete file in the repo
-        os.remove(self.file_path)
-        entry = self.getentry(self.file_path)
-        entry["flag"] = "removed"
-        self.assertRaises(IOError, open, self.file_path, 'r')
-
-        # commit changes in repo
-        committer = gocept.fssyncz2.Commit(
-            gocept.fssyncz2.getSynchronizer,
-            self.checker.repository)
-        committer.perform(self.base, "", self.basedir)
-
-        # file is not in db and repo
-        self.assertRaises(IOError, open, self.file_path, 'r')
-        self.assertRaises(KeyError, self.base.__getitem__, 'delete_me.txt')
+    def test_checkin(self):
+        # test a clean checkin
+        zope.app.fssync.main.checkout([], [
+            'http://manager:asdf@localhost:%s/base' % self.layer.port,
+            self.repository])
+        self.app._delObject('base')
+        self.assertRaises(KeyError, self.app.__getitem__, 'base')
+        try:
+            zope.app.fssync.main.checkin([], [
+                'http://manager:asdf@localhost:%s/base' % self.layer.port,
+                '%s/base' % self.repository])
+        except zope.fssync.fsutil.Error:
+            # XXX: whf?!
+            pass
+        self.assertEquals(self.app['base']['foo'].data, 'Content of foo')
+        self.assertEquals(self.app['base']['bar'].data, 'Content of bar')
+        self.assertEquals(self.app['base']['sub']['baz'].data, '')
 
 
 def test_suite():
@@ -582,6 +594,6 @@ def test_suite():
          unittest.makeSuite(EncodingTest),
          unittest.makeSuite(ReferencesTest),
          unittest.makeSuite(UserFolderTest),
-         unittest.makeSuite(TestCommit),
+         unittest.makeSuite(TestRoundTrip),
          doctest.DocTestSuite('gocept.fssyncz2.folder'),
          ))

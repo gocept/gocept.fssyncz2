@@ -50,38 +50,6 @@ def grep(pattern, lines, sort=False):
     return ''.join(lines)
 
 
-class ExampleFile(zope.fssync.tests.test_task.ExampleFile):
-
-    def _setId(self, key):
-        self.id = key
-
-
-class PretendContainer(zope.fssync.tests.test_task.PretendContainer):
-
-    def _setObject(self, key, value, **kw):
-        self[key] = value
-
-    def _delObject(self, key, **kw):
-        del self[key]
-
-    def objectItems(self):
-        return self.holding.iteritems()
-
-    def objectIds(self):
-        return self.holding.keys()
-
-
-class FileSynchronizer(zope.fssync.synchronizer.FileSynchronizer):
-    """A convenient base class for file serializers."""
-
-    def dump(self, writeable):
-        writeable.write(self.context.data)
-
-    def load(self, readable):
-        self.context.data = readable.read()
-
-
-
 class Zope2FunctionalLayer(object):
 
     __bases__ = (Testing.ZopeTestCase.layer.ZopeLiteLayer,)

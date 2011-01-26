@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<pickle>
+  <initialized_object>
+    <klass>
+      <global name="__newobj__" module="copy_reg"/>
+    </klass>
+    <arguments>
+      <tuple>
+        <global name="File" module="OFS.Image"/>
+      </tuple>
+    </arguments>
+    <state>
+      <dictionary>
+        <item key="_EtagSupport__etag">
+            <string>ts96033513.85</string>
+        </item>
+        <item key="__ac_local_roles__">
+            <dictionary>
+              <item key="test_user_1_">
+                  <list>
+                    <string>Owner</string>
+                  </list>
+              </item>
+            </dictionary>
+        </item>
+        <item key="__name__">
+            <string>baz</string>
+        </item>
+        <item key="content_type">
+            <string>application/octet-stream</string>
+        </item>
+        <item key="data">
+            <string>Content of baz</string>
+        </item>
+        <item key="precondition">
+            <string id="o0"></string>
+        </item>
+        <item key="size">
+            <int>14</int>
+        </item>
+        <item key="title">
+            <reference id="o0"/>
+        </item>
+      </dictionary>
+    </state>
+  </initialized_object>
+</pickle>
