@@ -422,48 +422,7 @@ Line 03"""
                      response.getBody())
 
 
-class UserFolderTest(Testing.ZopeTestCase.FunctionalTestCase):
-
-    layer = gocept.fssyncz2.testing.server_layer
-
-    def setUp(self):
-        Testing.ZopeTestCase.ZopeTestCase.setUp(self)
-        self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
-        self.app.manage_addFolder('folder')
-        self.app['folder'].manage_addProduct['OFSP'].manage_addUserFolder()
-        import transaction
-        transaction.commit()
-        import tempfile
-        self.tempdir = tempfile.mkdtemp()
-
-    def tearDown(self):
-        import shutil
-        shutil.rmtree(self.tempdir)
-
-    def test_userfolder_is_not_duplicated_after_checkout_checkin(self):
-        self.assertTrue(self.app['folder'].__allow_groups__.aq_base is
-                        self.app['folder']['acl_users'].aq_base)
-
-        import zope.app.fssync.main
-        zope.app.fssync.main.checkout([], [
-            'http://manager:asdf@localhost:%s/folder' % self.layer.port,
-            self.tempdir])
-        self.assertNotEquals(len(os.listdir(self.tempdir)), 0)
-        self.app._delObject('folder')
-        import zope.fssync.fsutil
-        try:
-            zope.app.fssync.main.checkin([], [
-                'http://manager:asdf@localhost:%s/folder' % self.layer.port,
-                '%s/folder' % self.tempdir])
-        except zope.fssync.fsutil.Error:
-            # XXX: whf?!
-            pass
-        self.assertTrue(self.app['folder'].__allow_groups__.aq_base is
-                        self.app['folder']['acl_users'].aq_base)
-
-
-class TestRoundTrip(Testing.ZopeTestCase.FunctionalTestCase):
-    """Test the data integrity during checkout, commit, update and checkin."""
+class BaseFileSystemTests(Testing.ZopeTestCase.FunctionalTestCase):
 
     layer = gocept.fssyncz2.testing.server_layer
 
@@ -480,6 +439,10 @@ class TestRoundTrip(Testing.ZopeTestCase.FunctionalTestCase):
         import tempfile
         self.repository = tempfile.mkdtemp()
 
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.repository)
+
     def _get_file_content(self, path):
         xml = open('%s/%s' % (self.repository, path), 'r').read()
         return pyquery.PyQuery(lxml.etree.fromstring(xml))
@@ -494,6 +457,38 @@ class TestRoundTrip(Testing.ZopeTestCase.FunctionalTestCase):
         xml = '<?xml version="1.0" encoding="utf-8" ?>\n%s' % (
             lxml.etree.tostring(pq[0]))
         return open('%s/%s' % (self.repository, path), 'w').write(xml)
+
+
+class UserFolderTest(BaseFileSystemTests):
+
+    def test_userfolder_is_not_duplicated_after_checkout_checkin(self):
+        self.app.manage_addFolder('folder')
+        self.app['folder'].manage_addProduct['OFSP'].manage_addUserFolder()
+        import transaction
+        transaction.commit()
+        self.assertTrue(self.app['folder'].__allow_groups__.aq_base is
+                        self.app['folder']['acl_users'].aq_base)
+
+        import zope.app.fssync.main
+        zope.app.fssync.main.checkout([], [
+            'http://manager:asdf@localhost:%s/folder' % self.layer.port,
+            self.repository])
+        self.assertNotEquals(len(os.listdir(self.repository)), 0)
+        self.app._delObject('folder')
+        import zope.fssync.fsutil
+        try:
+            zope.app.fssync.main.checkin([], [
+                'http://manager:asdf@localhost:%s/folder' % self.layer.port,
+                '%s/folder' % self.repository])
+        except zope.fssync.fsutil.Error:
+            # XXX: whf?!
+            pass
+        self.assertTrue(self.app['folder'].__allow_groups__.aq_base is
+                        self.app['folder']['acl_users'].aq_base)
+
+
+class TestRoundTrip(BaseFileSystemTests):
+    """Test the data integrity during checkout, commit, update and checkin."""
 
     def test_checkout(self):
         # checkout the repository and check the data integrity
