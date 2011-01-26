@@ -443,6 +443,14 @@ class BaseFileSystemTests(Testing.ZopeTestCase.FunctionalTestCase):
         import shutil
         shutil.rmtree(self.repository)
 
+    def _clean_checkin(self, opts, args):
+        # XXX: checkin raises an Error. This should not happen.
+        import zope.fssync.fsutil
+        try:
+            zope.app.fssync.main.checkin(opts, args)
+        except zope.fssync.fsutil.Error:
+            pass
+
     def _get_file_content(self, path):
         xml = open('%s/%s' % (self.repository, path), 'r').read()
         return pyquery.PyQuery(lxml.etree.fromstring(xml))
@@ -475,19 +483,14 @@ class UserFolderTest(BaseFileSystemTests):
             self.repository])
         self.assertNotEquals(len(os.listdir(self.repository)), 0)
         self.app._delObject('folder')
-        import zope.fssync.fsutil
-        try:
-            zope.app.fssync.main.checkin([], [
-                'http://manager:asdf@localhost:%s/folder' % self.layer.port,
-                '%s/folder' % self.repository])
-        except zope.fssync.fsutil.Error:
-            # XXX: whf?!
-            pass
+        self._clean_checkin([], [
+            'http://manager:asdf@localhost:%s/folder' % self.layer.port,
+            '%s/folder' % self.repository])
         self.assertTrue(self.app['folder'].__allow_groups__.aq_base is
                         self.app['folder']['acl_users'].aq_base)
 
 
-class TestRoundTrip(BaseFileSystemTests):
+class RoundTripTest(BaseFileSystemTests):
     """Test the data integrity during checkout, commit, update and checkin."""
 
     def test_checkout(self):
@@ -568,13 +571,9 @@ class TestRoundTrip(BaseFileSystemTests):
             self.repository])
         self.app._delObject('base')
         self.assertRaises(KeyError, self.app.__getitem__, 'base')
-        try:
-            zope.app.fssync.main.checkin([], [
-                'http://manager:asdf@localhost:%s/base' % self.layer.port,
-                '%s/base' % self.repository])
-        except zope.fssync.fsutil.Error:
-            # XXX: whf?!
-            pass
+        self._clean_checkin([], [
+            'http://manager:asdf@localhost:%s/base' % self.layer.port,
+            '%s/base' % self.repository])
         self.assertEquals(self.app['base']['foo'].data, 'Content of foo')
         self.assertEquals(self.app['base']['bar'].data, 'Content of bar')
         self.assertEquals(self.app['base']['sub']['baz'].data, '')
@@ -589,6 +588,6 @@ def test_suite():
          unittest.makeSuite(EncodingTest),
          unittest.makeSuite(ReferencesTest),
          unittest.makeSuite(UserFolderTest),
-         unittest.makeSuite(TestRoundTrip),
+         unittest.makeSuite(RoundTripTest),
          doctest.DocTestSuite('gocept.fssyncz2.folder'),
          ))
