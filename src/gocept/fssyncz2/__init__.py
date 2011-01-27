@@ -111,7 +111,11 @@ class CheckinCommitBase(object):
 
 
 class Checkin(CheckinCommitBase, zope.fssync.task.Checkin):
-    pass
+
+    def perform(self, container, name, fspath):
+        if container.hasObject(name):
+            container.manage_delObjects([name])
+        zope.fssync.task.Checkin.perform(self, container, name, fspath)
 
 
 class Commit(CheckinCommitBase, zope.fssync.task.Commit):
