@@ -138,7 +138,7 @@ class ViewTests(Testing.ZopeTestCase.FunctionalTestCase):
         conn.send(snarf)
 
         response = conn.getresponse()
-        self.assertEqual(204, response.status)
+        self.assertEqual(200, response.status)
         self.assertEqual(
             '<File at /folder2/file>', repr(self.app['folder2']['file']))
 
@@ -447,10 +447,7 @@ class BaseFileSystemTests(Testing.ZopeTestCase.FunctionalTestCase):
     def _clean_checkin(self, opts, args):
         # XXX: checkin raises an Error. This should not happen.
         import zope.fssync.fsutil
-        try:
-            zope.app.fssync.main.checkin(opts, args)
-        except zope.fssync.fsutil.Error:
-            pass
+        zope.app.fssync.main.checkin(opts, args)
 
     def _get_file_content(self, path):
         xml = open('%s/%s' % (self.repository, path), 'r').read()
@@ -499,11 +496,12 @@ class RoundTripTest(BaseFileSystemTests):
         zope.app.fssync.main.checkout([], [
             'http://manager:asdf@localhost:%s/base' % self.layer.port,
             self.repository])
-        self.assertEquals(os.listdir(self.repository), ['base', '@@Zope'])
-        self.assertEquals(os.listdir('%s/base' % self.repository),
-                          ['sub', 'bar', 'foo', '@@Zope'])
-        self.assertEquals(os.listdir('%s/base/sub' % self.repository),
-                          ['baz', '@@Zope'])
+        self.assertEquals(sorted(os.listdir(self.repository)),
+                          ['@@Zope', 'base'])
+        self.assertEquals(sorted(os.listdir('%s/base' % self.repository)),
+                          ['@@Zope', 'bar', 'foo', 'sub'])
+        self.assertEquals(sorted(os.listdir('%s/base/sub' % self.repository)),
+                          ['@@Zope', 'baz'])
 
     def _add_flag(self, base_path, file, flag):
         meta_path = '%s/%s/@@Zope/Entries.xml' % (self.repository, base_path)
