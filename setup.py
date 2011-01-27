@@ -16,4 +16,7 @@ setup(name='gocept.fssyncz2',
 	  'lxml',
           'pyquery',
           ],
+      entry_points=dict(console_scripts=[
+          'sync = gocept.fssyncz2.main:checkinout'
+          ]),
       )
