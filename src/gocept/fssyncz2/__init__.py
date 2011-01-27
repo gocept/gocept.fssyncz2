@@ -145,7 +145,7 @@ class SnarfCheckin(SnarfCheckinCommitBase, zope.app.fssync.browser.SnarfCheckin)
         snarf = zope.fssync.repository.SnarfRepository(stream)
         checkin = Checkin(getSynchronizer, snarf)
         checkin.perform(self.container, self.name, self.fspath)
-        return ""
+        return "checkin completed"
 
 
 class SnarfCommit(SnarfCheckinCommitBase, zope.app.fssync.browser.SnarfCommit):
