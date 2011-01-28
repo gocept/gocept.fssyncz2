@@ -15,6 +15,7 @@ import zope.testbrowser.browser
 import zope.fssync.tests.test_task
 import zope.fssync.synchronizer
 import zope.app.fssync.main
+import gocept.fssyncz2.main
 import os.path
 import lxml
 import pyquery
@@ -440,14 +441,14 @@ class BaseFileSystemTests(Testing.ZopeTestCase.FunctionalTestCase):
         import tempfile
         self.repository = tempfile.mkdtemp()
 
+        # save host and credentials
+        self.host = 'localhost:%s' % self.layer.port
+        self.credentials = 'manager:asdf'
+
+
     def tearDown(self):
         import shutil
         shutil.rmtree(self.repository)
-
-    def _clean_checkin(self, opts, args):
-        # XXX: checkin raises an Error. This should not happen.
-        import zope.fssync.fsutil
-        zope.app.fssync.main.checkin(opts, args)
 
     def _get_file_content(self, path):
         xml = open('%s/%s' % (self.repository, path), 'r').read()
@@ -477,105 +478,15 @@ class UserFolderTest(BaseFileSystemTests):
 
         import zope.app.fssync.main
         zope.app.fssync.main.checkout([], [
-            'http://manager:asdf@localhost:%s/folder' % self.layer.port,
+            'http://%s@%s/folder' % (self.credentials, self.host),
             self.repository])
         self.assertNotEquals(len(os.listdir(self.repository)), 0)
         self.app._delObject('folder')
-        self._clean_checkin([], [
-            'http://manager:asdf@localhost:%s/folder' % self.layer.port,
+        zope.app.fssync.main.checkin([], [
+            'http://%s@%s/folder' % (self.credentials, self.host),
             '%s/folder' % self.repository])
         self.assertTrue(self.app['folder'].__allow_groups__.aq_base is
                         self.app['folder']['acl_users'].aq_base)
-
-
-class RoundTripTest(BaseFileSystemTests):
-    """Test the data integrity during checkout, commit, update and checkin."""
-
-    def test_checkout(self):
-        # checkout the repository and check the data integrity
-        zope.app.fssync.main.checkout([], [
-            'http://manager:asdf@localhost:%s/base' % self.layer.port,
-            self.repository])
-        self.assertEquals(sorted(os.listdir(self.repository)),
-                          ['@@Zope', 'base'])
-        self.assertEquals(sorted(os.listdir('%s/base' % self.repository)),
-                          ['@@Zope', 'bar', 'foo', 'sub'])
-        self.assertEquals(sorted(os.listdir('%s/base/sub' % self.repository)),
-                          ['@@Zope', 'baz'])
-
-    def _add_flag(self, base_path, file, flag):
-        meta_path = '%s/%s/@@Zope/Entries.xml' % (self.repository, base_path)
-        xml = lxml.etree.fromstring(open(meta_path, 'r').read())
-        pq = pyquery.PyQuery(xml)
-        if pq('entry[name=%s]' % file):
-            pq('entry[name=%s]' % file)[0].set('flag', flag)
-        else:
-            xml.append(lxml.etree.fromstring("""
-                <entry name="%(name)s"
-                  keytype="__builtin__.str"
-                  type="OFS.Image.File"
-                  id="/%(path)s/%(name)s"
-                  flag="%(flag)s"
-                />""" % dict(name=file, path=base_path, flag=flag)))
-        open(meta_path, 'w').write(lxml.etree.tostring(xml))
-
-    def test_commit(self):
-        # test that changes to a file are committed to the database and
-        # that files are added and deleted
-        self.assertEquals(self.app['base']['bar'].data, 'Content of bar')
-        zope.app.fssync.main.checkout([], [
-            'http://manager:asdf@localhost:%s/base' % self.layer.port,
-            self.repository])
-        # change the content of bar
-        self._write_file_content('base/bar', 'asdf')
-        # add baz
-        baz_template = open(os.path.join(
-            os.path.dirname(gocept.fssyncz2.__file__), 'testdata', 'baz'))
-        open('%s/base/baz' % self.repository, 'w').write(baz_template.read())
-        self._add_flag('base', 'baz', 'added')
-        # delete foo
-        os.remove('%s/base/foo' % self.repository)
-        self._add_flag('base', 'foo', 'removed')
-        zope.app.fssync.main.commit([], ['%s/base' % self.repository])
-        self.assertEquals(self.app['base']['bar'].data, 'asdf')
-        self.assertEquals(self.app['base']['baz'].data, 'Content of baz')
-        self.assertRaises(KeyError, self.app['base'].__getitem__, 'foo')
-
-    def test_update(self):
-        # test that changes to file are updated to the repository and
-        # that files are added and deleted
-        zope.app.fssync.main.checkout([], [
-            'http://manager:asdf@localhost:%s/base' % self.layer.port,
-            self.repository])
-        # change the content of foo
-        self.assertEquals(
-            self._read_file_content('base/foo'), 'Content of foo')
-        # delete bar
-        self.app['base']._delObject('bar')
-        self.app['base']['foo'].data = 'asdf'
-        # add baz in base
-        self.app['base'].manage_addFile('baz', 'Content of baz')
-        # update
-        zope.app.fssync.main.update([], ['%s/base' % self.repository])
-        self.assertEquals(
-            self._read_file_content('base/foo'), 'asdf')
-        self.assertRaises(IOError, self._read_file_content, 'base/base')
-        self.assertEquals(
-            self._read_file_content('base/baz'), 'Content of baz')
-
-    def test_checkin(self):
-        # test a clean checkin
-        zope.app.fssync.main.checkout([], [
-            'http://manager:asdf@localhost:%s/base' % self.layer.port,
-            self.repository])
-        self.app._delObject('base')
-        self.assertRaises(KeyError, self.app.__getitem__, 'base')
-        self._clean_checkin([], [
-            'http://manager:asdf@localhost:%s/base' % self.layer.port,
-            '%s/base' % self.repository])
-        self.assertEquals(self.app['base']['foo'].data, 'Content of foo')
-        self.assertEquals(self.app['base']['bar'].data, 'Content of bar')
-        self.assertEquals(self.app['base']['sub']['baz'].data, '')
 
 
 class SanityCheckTest(BaseFileSystemTests):
@@ -584,7 +495,7 @@ class SanityCheckTest(BaseFileSystemTests):
     def _checkout_checkin(self):
         # checkout
         zope.app.fssync.main.checkout([], [
-            'http://manager:asdf@localhost:%s/base' % self.layer.port,
+            'http://%s@%s/base' % (self.credentials, self.host),
             self.repository])
         # init database
         self.layer.tearDown()
@@ -592,8 +503,8 @@ class SanityCheckTest(BaseFileSystemTests):
         Testing.ZopeTestCase.ZopeTestCase.setUp(self)
         # checkin
         self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
-        self._clean_checkin([], [
-            'http://manager:asdf@localhost:%s/base' % self.layer.port,
+        zope.app.fssync.main.checkin([], [
+            'http://%s@%s/base' % (self.credentials, self.host),
             '%s/base' % self.repository])
         transaction.commit()
 
@@ -645,7 +556,7 @@ class SanityCheckTest(BaseFileSystemTests):
 
         # checkout in second repository
         zope.app.fssync.main.checkout([], [
-            'http://manager:asdf@localhost:%s/base' % self.layer.port,
+            'http://%s@%s/base' % (self.credentials, self.host),
             self.repository2])
 
         # check that both repositories match
@@ -657,6 +568,51 @@ class SanityCheckTest(BaseFileSystemTests):
             self.assertEquals(stat['diff_folder'], [])
 
 
+class RoundTripTest(BaseFileSystemTests):
+
+    def _get_manager(self):
+        uf = self.app['acl_users']
+        user = uf.getUserById('manager')
+        user = user.__of__(uf)
+        import AccessControl.SecurityManagement
+        AccessControl.SecurityManagement.newSecurityManager(None, user)
+
+    def _switch_base(self):
+        self.app.manage_clone(self.app['base'], 'base3')
+        self.app.manage_delObjects(['base'])
+        self.app.manage_clone(self.app['base2'], 'base')
+        self.app.manage_delObjects(['base2'])
+        self.app.manage_clone(self.app['base3'], 'base2')
+        self.app.manage_delObjects(['base3'])
+
+    def test_delete_file_in_roundtrip(self):
+        self._get_manager()
+
+        # copy base to base2
+        self.app.manage_clone(self.app['base'], 'base2')
+
+        # checkout base to repository
+        gocept.fssyncz2.main.checkout(
+            self.host, 'base', self.credentials, self.repository)
+        # delete foo in base
+        self.app['base'].manage_delObjects('foo')
+        # update repository
+        gocept.fssyncz2.main.checkout(
+            self.host, 'base', self.credentials, self.repository)
+
+        # switch base to base2
+        self._switch_base()
+
+        # foo is back in database and should be removed now
+        self.assertEquals(self.app['base']['foo'].data, 'Content of foo')
+        # update the repository to get rid of out-of-sync errors
+        gocept.fssyncz2.main.checkin(
+            self.host, 'base', self.credentials, self.repository)
+        # foo is now removed
+        self.assertRaises(KeyError, self.app['base'].__getitem__, 'foo')
+        self.assertEquals(self.app['base']['bar'].data, 'Content of bar')
+
+
 def test_suite():
     return unittest.TestSuite(
         (unittest.makeSuite(Zope2ObjectsTest),
@@ -666,7 +622,7 @@ def test_suite():
          unittest.makeSuite(EncodingTest),
          unittest.makeSuite(ReferencesTest),
          unittest.makeSuite(UserFolderTest),
-         unittest.makeSuite(RoundTripTest),
          unittest.makeSuite(SanityCheckTest),
+         unittest.makeSuite(RoundTripTest),
          doctest.DocTestSuite('gocept.fssyncz2.folder'),
          ))
