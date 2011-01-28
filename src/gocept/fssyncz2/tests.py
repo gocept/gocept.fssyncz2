@@ -582,11 +582,16 @@ class SanityCheckTest(BaseFileSystemTests):
     """Some sanity checks for checkout, commit, update and checkin."""
 
     def _checkout_checkin(self):
+        # checkout
         zope.app.fssync.main.checkout([], [
             'http://manager:asdf@localhost:%s/base' % self.layer.port,
             self.repository])
+        # init database
         self.layer.tearDown()
         self.layer.setUp()
+        Testing.ZopeTestCase.ZopeTestCase.setUp(self)
+        # checkin
+        self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
         self._clean_checkin([], [
             'http://manager:asdf@localhost:%s/base' % self.layer.port,
             '%s/base' % self.repository])
