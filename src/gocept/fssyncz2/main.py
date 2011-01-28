@@ -4,6 +4,7 @@
 import os.path
 import sys
 import zope.app.fssync.main
+import gocept.fssyncz2.main
 
 
 def checkinout(host, folder, credentials, repository):
@@ -27,17 +28,30 @@ def checkinout(host, folder, credentials, repository):
     if len(sys.argv) != 2:
         sys.stderr.write('Usage: %s <checkin|checkout>\n' % sys.argv[0])
         sys.exit(1)
-
     command = sys.argv[1]
 
-    url = 'http://%s@%s' % (credentials, host)
-
-    if command == 'checkout':
-        command = zope.app.fssync.main.checkout
-    elif command == 'checkin':
-        command = zope.app.fssync.main.checkin
-        repository = os.path.join(repository, folder)
-    else:
+    try:
+        command = getattr(gocept.fssyncz2.main, command)
+    except AttributeError:
         raise ValueError('Invalid command %r' % command)
 
-    command([], [os.path.join(url, folder), repository])
+    command(host, folder, credentials, repository)
+
+
+def _get_url(host, credentials=None):
+    if credentials is not None:
+        credentials += '@'
+    else:
+        credentials = ''
+    return 'http://%s%s' % (credentials, host)
+
+
+def checkout(host, folder, credentials, repository):
+    zope.app.fssync.main.checkout(
+        [], [os.path.join(_get_url(host, credentials), folder), repository])
+
+
+def checkin(host, folder, credentials, repository):
+    repository = os.path.join(repository, folder)
+    zope.app.fssync.main.checkin(
+        [], [os.path.join(_get_url(host, credentials), folder), repository])
