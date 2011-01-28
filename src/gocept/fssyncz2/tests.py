@@ -489,6 +489,37 @@ class UserFolderTest(BaseFileSystemTests):
                         self.app['folder']['acl_users'].aq_base)
 
 
+class ZSyncTest(BaseFileSystemTests):
+
+    base_folder = 'base'
+
+    def _call_checkinout(self, command):
+        import sys
+        sys.argv = ['bin/sync', command]
+        gocept.fssyncz2.main.checkinout(
+            self.host, self.base_folder, self.credentials, self.repository)
+
+    def test_checkin_checkout(self):
+        self.assertFalse(self.base_folder in os.listdir(self.repository))
+        self._call_checkinout('checkout')
+        self.assertTrue(self.base_folder in os.listdir(self.repository))
+        self.app.manage_delObjects([self.base_folder])
+        self.assertFalse(self.app.hasObject(self.base_folder))
+        self._call_checkinout('checkin')
+        self.assertTrue(self.app.hasObject(self.base_folder))
+
+    def test_checkinout_raises_ValueError_for_unknown_commands(self):
+        self.assertRaises(ValueError, self._call_checkinout, 'unknown')
+
+    def test_url_assembling(self):
+        from gocept.fssyncz2.main import _get_url
+        self.assertEquals(_get_url('localhost', 'user'),
+                          'http://user@localhost')
+        self.assertEquals(_get_url('localhost', 'user:password'),
+                          'http://user:password@localhost')
+        self.assertEquals(_get_url('localhost'), 'http://localhost')
+
+
 class SanityCheckTest(BaseFileSystemTests):
     """Some sanity checks for checkout, commit, update and checkin."""
 
@@ -623,6 +654,7 @@ def test_suite():
          unittest.makeSuite(ReferencesTest),
          unittest.makeSuite(UserFolderTest),
          unittest.makeSuite(SanityCheckTest),
+         unittest.makeSuite(ZSyncTest),
          unittest.makeSuite(RoundTripTest),
          doctest.DocTestSuite('gocept.fssyncz2.folder'),
          ))
