@@ -11,11 +11,18 @@ setup(name='gocept.fssyncz2',
       zip_safe=False,
       install_requires=[
           'setuptools',
-#          'Zope2',
           'zope.app.fssync',
-	  'lxml',
-          'pyquery',
+          'zope.component',
+          'zope.fssync',
+          'zope.security',
+          'zope.traversing',
+          'zope.xmlpickle',
+#          'Zope2',
           ],
+      extras_require=dict(test=[
+          'lxml',
+          'pyquery',
+          ]),
       entry_points=dict(console_scripts=[
           'sync = gocept.fssyncz2.main:checkinout'
           ]),
