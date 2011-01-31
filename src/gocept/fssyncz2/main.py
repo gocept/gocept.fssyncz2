@@ -7,7 +7,7 @@ import zope.app.fssync.main
 import gocept.fssyncz2.main
 
 
-def checkinout(host, folder, credentials, repository):
+def main(host, folder, credentials, repository):
     """
     Wraps zope.app.fssync commands checkin and checkout,
     prepopulating all parameters.
@@ -26,7 +26,7 @@ def checkinout(host, folder, credentials, repository):
     """
 
     if len(sys.argv) != 2:
-        sys.stderr.write('Usage: %s <checkin|checkout>\n' % sys.argv[0])
+        sys.stderr.write('Usage: %s <dump|load>\n' % sys.argv[0])
         sys.exit(1)
     command = sys.argv[1]
 
@@ -46,12 +46,12 @@ def _get_url(host, credentials=None):
     return 'http://%s%s' % (credentials, host)
 
 
-def checkout(host, folder, credentials, repository):
+def dump(host, folder, credentials, repository):
     zope.app.fssync.main.checkout(
         [], [os.path.join(_get_url(host, credentials), folder), repository])
 
 
-def checkin(host, folder, credentials, repository):
+def load(host, folder, credentials, repository):
     repository = os.path.join(repository, folder)
     zope.app.fssync.main.checkin(
         [], [os.path.join(_get_url(host, credentials), folder), repository])
