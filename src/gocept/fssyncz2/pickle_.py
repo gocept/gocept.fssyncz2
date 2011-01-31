@@ -1,5 +1,6 @@
-import pickle
-import types
+# Copyright (c) 2011 gocept gmbh & co. kg
+# See also LICENSE.txt
+
 import zope.fssync.interfaces
 import zope.fssync.pickle
 import zope.xmlpickle.xmlpickle
@@ -36,6 +37,7 @@ class UnwrappedPickler(zope.fssync.pickle.XMLPickler):
             self.context = self.context.aq_base
         except AttributeError:
             pass
+
 
 def dump(self, writeable):
     # MonkeyPatch: Inject our DuplicateOIdPreventingPickler

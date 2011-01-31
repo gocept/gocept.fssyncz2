@@ -1,10 +1,11 @@
+# Copyright (c) 2011 gocept gmbh & co. kg
+# See also LICENSE.txt
+
 import Lifetime
 import StringIO
 import Testing.ZopeTestCase
 import Testing.ZopeTestCase.layer
-import random
 import re
-import time
 import zope.fssync.snarf
 import zope.fssync.tests.test_task
 import zope.fssync.synchronizer

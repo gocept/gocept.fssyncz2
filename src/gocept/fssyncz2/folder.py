@@ -1,3 +1,6 @@
+# Copyright (c) 2011 gocept gmbh & co. kg
+# See also LICENSE.txt
+
 import AccessControl.User
 import OFS.Folder
 import copy_reg
@@ -77,7 +80,7 @@ class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
         extra = self.context.__dict__.copy()
         extra.pop('_objects', None)
         # Duplicated UserFolder, is added in __setitem__
-        extra.pop('__allow_groups__', None) 
+        extra.pop('__allow_groups__', None)
         extra.pop('id', None)
         for key in self.context.objectIds():
             del extra[key]
@@ -94,7 +97,7 @@ class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
             if (isinstance(value, persistent.Persistent) or
                 isinstance(key, persistent.Persistent)):
                 raise RuntimeError(
-                    'Persistent object in Extras found: %s: %s' % (key,value))
+                    'Persistent object in Extras found: %s: %s' % (key, value))
 
 
 def reduce(self):
@@ -104,6 +107,5 @@ def reduce(self):
         for key in self.objectIds():
             del state[key]
     return rv
-
 
 copy_reg.dispatch_table[OFS.Folder.Folder] = reduce
