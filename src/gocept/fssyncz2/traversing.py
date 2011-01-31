@@ -1,8 +1,10 @@
+# Copyright (c) 2011 gocept gmbh & co. kg
+# See also LICENSE.txt
+
+import OFS.interfaces
 import zope.component
 import zope.interface
 import zope.traversing.interfaces
-
-import OFS.interfaces
 
 
 class OFSPhysicallyLocatable(object):

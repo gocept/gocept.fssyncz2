@@ -1,25 +1,30 @@
+# Copyright (c) 2011 gocept gmbh & co. kg
+# See also LICENSE.txt
+
 from gocept.fssyncz2.testing import unsnarf, grep
 import Missing
 import OFS.SimpleItem
 import StringIO
 import Testing.ZopeTestCase
 import doctest
+import gocept.fssyncz2.main
 import gocept.fssyncz2.testing
 import gocept.fssyncz2.traversing
 import httplib
+import lxml
+import os.path
 import pickle
+import pyquery
 import random
+import shutil
+import tempfile
+import transaction
 import unittest
 import urllib2
-import zope.testbrowser.browser
-import zope.fssync.tests.test_task
-import zope.fssync.synchronizer
 import zope.app.fssync.main
-import gocept.fssyncz2.main
-import os.path
-import lxml
-import pyquery
-import transaction
+import zope.fssync.synchronizer
+import zope.fssync.tests.test_task
+import zope.testbrowser.browser
 
 
 class Zope2ObjectsTest(unittest.TestCase):
@@ -151,6 +156,7 @@ class ReferencesTest(Testing.ZopeTestCase.FunctionalTestCase):
     def setUp(self):
         super(ReferencesTest, self).setUp()
         self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
+
     def test_multiple_references_to_one_object_abort_checkout(self):
         self.app.manage_addFolder('folder')
         self.app['folder'].manage_addFile('foo', '')
@@ -438,16 +444,13 @@ class BaseFileSystemTests(Testing.ZopeTestCase.FunctionalTestCase):
         self.app['base'].manage_addFile('foo', 'Content of foo')
         self.app['base'].manage_addFile('bar', 'Content of bar')
         self.app['base']['sub'].manage_addFile('baz', '')
-        import tempfile
         self.repository = tempfile.mkdtemp()
 
         # save host and credentials
         self.host = 'localhost:%s' % self.layer.port
         self.credentials = 'manager:asdf'
 
-
     def tearDown(self):
-        import shutil
         shutil.rmtree(self.repository)
 
     def _get_file_content(self, path):

@@ -1,3 +1,6 @@
+# Copyright (c) 2011 gocept gmbh & co. kg
+# See also LICENSE.txt
+
 from zope.i18nmessageid import ZopeMessageFactory as _
 import Missing
 import cgi
@@ -14,19 +17,16 @@ import zope.security.proxy
 import zope.xmlpickle.ppml
 import gocept.fssyncz2.pickle_
 import zope.traversing.interfaces
-import Zope2
 
-
-original_save = pickle.Pickler.save
 
 def save(self, obj):
     if obj is Missing.Value:
         obj = None
     return original_save(self, obj)
 
+original_save = pickle.Pickler.save
 pickle.Pickler.save = save
 
-original_SyncTask__init__ = zope.fssync.task.SyncTask.__init__
 
 def SyncTask__init__(self, *args, **kw):
     """Clear the guards oid cache and path."""
@@ -34,7 +34,9 @@ def SyncTask__init__(self, *args, **kw):
     gocept.fssyncz2.pickle_.path[:] = []
     original_SyncTask__init__(self, *args, **kw)
 
+original_SyncTask__init__ = zope.fssync.task.SyncTask.__init__
 zope.fssync.task.SyncTask.__init__ = SyncTask__init__
+
 
 def convert_string(self, string):
     """Convert a string to a form that can be included in XML text"""
@@ -106,7 +108,8 @@ class CheckinCommitBase(object):
 
     def createObject(self, container, name, *args, **kwargs):
         # Monkey Patch: Acquisition wrap
-        super(CheckinCommitBase, self).createObject(container, name, *args, **kwargs)
+        super(CheckinCommitBase, self).createObject(
+            container, name, *args, **kwargs)
         return container[name]
 
 
@@ -126,7 +129,7 @@ class SnarfCheckinCommitBase(object):
     """Monkey Patch: Zope2 request behaviour."""
 
     def check_content_type(self):
-        if not self.request.get_header("Content-Type") == "application/x-snarf":
+        if self.request.get_header("Content-Type") != "application/x-snarf":
             raise ValueError(_("Content-Type is not application/x-snarf"))
 
     def parse_args(self):
@@ -137,7 +140,8 @@ class SnarfCheckinCommitBase(object):
             self.args = {}
 
 
-class SnarfCheckin(SnarfCheckinCommitBase, zope.app.fssync.browser.SnarfCheckin):
+class SnarfCheckin(
+    SnarfCheckinCommitBase, zope.app.fssync.browser.SnarfCheckin):
     """Monkey Patch: Zope2 request behaviour."""
 
     def run_submission(self):
