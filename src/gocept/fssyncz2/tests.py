@@ -499,16 +499,16 @@ class ZSyncTest(BaseFileSystemTests):
     def _call_checkinout(self, command):
         import sys
         sys.argv = ['bin/sync', command]
-        gocept.fssyncz2.main.checkinout(
+        gocept.fssyncz2.main.main(
             self.host, self.base_folder, self.credentials, self.repository)
 
     def test_checkin_checkout(self):
         self.assertFalse(self.base_folder in os.listdir(self.repository))
-        self._call_checkinout('checkout')
+        self._call_checkinout('dump')
         self.assertTrue(self.base_folder in os.listdir(self.repository))
         self.app.manage_delObjects([self.base_folder])
         self.assertFalse(self.app.hasObject(self.base_folder))
-        self._call_checkinout('checkin')
+        self._call_checkinout('load')
         self.assertTrue(self.app.hasObject(self.base_folder))
 
     def test_checkinout_raises_ValueError_for_unknown_commands(self):
@@ -626,12 +626,12 @@ class RoundTripTest(BaseFileSystemTests):
         self.app.manage_clone(self.app['base'], 'base2')
 
         # checkout base to repository
-        gocept.fssyncz2.main.checkout(
+        gocept.fssyncz2.main.dump(
             self.host, 'base', self.credentials, self.repository)
         # delete foo in base
         self.app['base'].manage_delObjects('foo')
         # update repository
-        gocept.fssyncz2.main.checkout(
+        gocept.fssyncz2.main.dump(
             self.host, 'base', self.credentials, self.repository)
 
         # switch base to base2
@@ -640,7 +640,7 @@ class RoundTripTest(BaseFileSystemTests):
         # foo is back in database and should be removed now
         self.assertEquals(self.app['base']['foo'].data, 'Content of foo')
         # update the repository to get rid of out-of-sync errors
-        gocept.fssyncz2.main.checkin(
+        gocept.fssyncz2.main.load(
             self.host, 'base', self.credentials, self.repository)
         # foo is now removed
         self.assertRaises(KeyError, self.app['base'].__getitem__, 'foo')

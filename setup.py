@@ -35,6 +35,6 @@ setup(name='gocept.fssyncz2',
           'pyquery',
           ]),
       entry_points=dict(console_scripts=[
-          'fssync = gocept.fssyncz2.main:checkinout'
+          'fssync = gocept.fssyncz2.main:main'
           ]),
       )
