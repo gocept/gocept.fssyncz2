@@ -101,6 +101,10 @@ class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
 
 
 def reduce(self):
+    # OFS.Folder stores folder entries as attributes of the folder object, but
+    # we want to serialize them as files in a directory (see
+    # FolderSynchronizer.iteritems, above). Thus, we remove them from the
+    # object state here.
     rv = super(type(self), self).__reduce__()
     if len(rv) >= 3 and rv[2] is not None:
         state = rv[2]
