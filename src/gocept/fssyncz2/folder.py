@@ -97,7 +97,8 @@ class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
             if (isinstance(value, persistent.Persistent) or
                 isinstance(key, persistent.Persistent)):
                 raise RuntimeError(
-                    'Persistent object in Extras found: %s: %s' % (key, value))
+                    'Persistent object in Extras of %s found: %s: %s' % (
+                        self.context.absolute_url(), key, value))
 
 
 def reduce(self):
