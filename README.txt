@@ -11,7 +11,7 @@ Its main use case is to keep code stored inside the ZODB in a source code
 management system. Therefore, it tries to make the pickles that are written to
 disk as readable as possible (e. g. by not using base64 encoding).
 
-So far, it concentrates on the ``checkin`` and ``checkout`` actions (which
+So far, it concentrates on the ``dump`` and ``load`` actions (which
 overwrite their target completely), since merging changes between different
 checkouts needs to be done via the SCM anyway. (zope.app.fssync offers several
 other actions, such as ``update`` and ``commit``, that try to be smart when
@@ -28,7 +28,7 @@ You'll need to load both the configure.zcml and overrides.zcml configuration
 files.
 
 gocept.fssyncz2 provides a console script called ``fssync`` which wraps the two
-actions (``checkout`` and ``checkin``) and allows to pass in all other
+actions (``dump`` and ``load``) and allows to pass in all other
 parameters (URLs, locations, credentials). This is meant to be generated (via
 buildout for example), like this::
 
@@ -39,5 +39,5 @@ buildout for example), like this::
   arguments = host='${instance:http-address}', folder='myfolder', credentials='${instance:user}', repository='${buildout:directory}/var/zodb-dump'
 
 Then you can dump your ZODB to the configured filesystem location with
-``bin/fssync checkout`` and load the data stored on the filesystem into the
-ZODB with ``bin/fssync checkin``.
+``bin/fssync dump`` and load the data stored on the filesystem into the
+ZODB with ``bin/fssync load``.
