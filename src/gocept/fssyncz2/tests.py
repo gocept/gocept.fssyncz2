@@ -1,3 +1,4 @@
+# -* coding: utf-8 -*-
 # Copyright (c) 2011 gocept gmbh & co. kg
 # See also LICENSE.txt
 
@@ -337,6 +338,30 @@ class PythonScriptTest(Testing.ZopeTestCase.FunctionalTestCase):
                      stdin=StringIO.StringIO(response.getBody()),
                      handle_errors=False)
         self.assertEqual(42, self.app['folder2']['foo']())
+
+    def test_newlines_are_always_dumped_as_newlines(self):
+        self.app['folder'].manage_addProduct['PythonScripts'
+                                             ].manage_addPythonScript('foo')
+        self.app['folder']['foo'].write('# <öäü>\nreturn 42')
+        response = self.publish('/folder/@@toFS.snarf', basic='manager:asdf')
+        self.assertTrue(r"""<![CDATA[# <\xc3\xb6\xc3\xa4\xc3\xbc>
+return 42
+]]>""" in ''.join(unsnarf(response, 'folder/foo')))
+
+    def test_newlines_dumped_as_newlines_are_loaded_correctly(self):
+        self.app['folder'].manage_addProduct['PythonScripts'
+                                             ].manage_addPythonScript('foo')
+        self.app['folder']['foo'].write('# <öäü>\nreturn 42')
+        response = self.publish('/folder/@@toFS.snarf', basic='manager:asdf')
+        self.publish('/@@checkin.snarf?note=test&name=folder2&src=folder',
+                     basic='manager:asdf',
+                     request_method='POST',
+                     env={'CONTENT_TYPE': 'application/x-snarf'},
+                     stdin=StringIO.StringIO(response.getBody()),
+                     handle_errors=False)
+        self.assertEqual(
+            '# <öäü>\nreturn 42\n', self.app['folder']['foo']._body)
+
 
 class PickleOrderTest(Testing.ZopeTestCase.FunctionalTestCase):
     """Make sure element order in XML pickles is kept stable.
