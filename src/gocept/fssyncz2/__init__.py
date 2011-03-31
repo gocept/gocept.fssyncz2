@@ -43,7 +43,7 @@ def convert_string(self, string):
     encoding = ''
     if zope.xmlpickle.ppml._binary_char(string):
         encoding = 'string_escape'
-        string = string.encode(encoding)
+        string = '\n'.join(s.encode(encoding) for s in string.split('\n'))
     _, string = zope.xmlpickle.ppml._convert_sub(string)
     return encoding, string
 
@@ -51,9 +51,10 @@ zope.xmlpickle.ppml.String.convert = convert_string
 
 
 def convert_unicode(self, string):
+    encoding = 'unicode_escape'
     _, string = zope.xmlpickle.ppml._convert_sub(
-        string.encode('unicode_escape'))
-    return 'unicode_escape', string
+        '\n'.join(s.encode(encoding) for s in string.split('\n')))
+    return encoding, string
 
 zope.xmlpickle.ppml.Unicode.convert = convert_unicode
 
