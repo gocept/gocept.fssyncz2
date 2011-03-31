@@ -58,6 +58,7 @@ class Zope2FunctionalLayer(object):
 
     def setUp(self):
         Testing.ZopeTestCase.installProduct('Five')
+        Testing.ZopeTestCase.installProduct('PythonScripts')
         Testing.ZopeTestCase.layer.ZopeLiteLayer.setUp()
 
 

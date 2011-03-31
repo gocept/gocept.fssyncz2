@@ -302,6 +302,42 @@ class FolderTest(Testing.ZopeTestCase.FunctionalTestCase):
         self.assertEqual('bar', self.app['folder2']['foo'].data)
 
 
+class PythonScriptTest(Testing.ZopeTestCase.FunctionalTestCase):
+    """Make sure leaving out compiled code doesn't break anything.
+
+    """
+
+    layer = gocept.fssyncz2.testing.functional_layer
+
+    def setUp(self):
+        super(PythonScriptTest, self).setUp()
+        self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
+        self.app.manage_addFolder('folder')
+
+    def tearDown(self):
+        self.app.manage_delObjects(['folder'])
+        super(PythonScriptTest, self).tearDown()
+
+    def test_compiled_code_is_left_out(self):
+        self.app['folder'].manage_addProduct['PythonScripts'
+                                             ].manage_addPythonScript('foo')
+        self.assertTrue(self.app['folder']['foo']._code)
+        response = self.publish('/folder/@@toFS.snarf', basic='manager:asdf')
+        self.assertFalse('"_code"' in ''.join(unsnarf(response, 'folder/foo')))
+
+    def test_reloaded_pythonscript_runs_correctly(self):
+        self.app['folder'].manage_addProduct['PythonScripts'
+                                             ].manage_addPythonScript('foo')
+        self.app['folder']['foo'].write('return 42')
+        response = self.publish('/folder/@@toFS.snarf', basic='manager:asdf')
+        self.publish('/@@checkin.snarf?note=test&name=folder2&src=folder',
+                     basic='manager:asdf',
+                     request_method='POST',
+                     env={'CONTENT_TYPE': 'application/x-snarf'},
+                     stdin=StringIO.StringIO(response.getBody()),
+                     handle_errors=False)
+        self.assertEqual(42, self.app['folder2']['foo']())
+
 class PickleOrderTest(Testing.ZopeTestCase.FunctionalTestCase):
     """Make sure element order in XML pickles is kept stable.
 
@@ -652,6 +688,7 @@ def test_suite():
         (unittest.makeSuite(Zope2ObjectsTest),
          unittest.makeSuite(ViewTests),
          unittest.makeSuite(FolderTest),
+         unittest.makeSuite(PythonScriptTest),
          unittest.makeSuite(PickleOrderTest),
          unittest.makeSuite(EncodingTest),
          unittest.makeSuite(ReferencesTest),

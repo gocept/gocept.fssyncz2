@@ -10,6 +10,7 @@
 
   <adapter factory="gocept.fssyncz2.traversing.OFSPhysicallyLocatable" />
   <adapter factory="gocept.fssyncz2.pickle_.UnwrappedPickler" />
+  <adapter factory="gocept.fssyncz2.pythonscript.Pickler" />
 
   <utility
      component=".folder.FolderSynchronizer"
