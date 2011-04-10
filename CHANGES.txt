@@ -3,7 +3,7 @@ Changes
 =======
 
 
-1.2 (unreleased)
+1.2 (2011-04-10)
 ================
 
 - make sure that newlines inside strings end up as newlines instead of \n
