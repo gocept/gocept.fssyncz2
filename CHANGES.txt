@@ -6,7 +6,17 @@ Changes
 1.2 (unreleased)
 ================
 
-- Nothing changed yet.
+- make sure that newlines inside strings end up as newlines instead of \n
+  notation in XML pickles (fixes #8860)
+
+- install the fssync script in the development buildout
+
+- when dumping a PythonScript, leave out its _code attribute to reduce noise
+  in the XML pickles (fixes #8859)
+
+- declared dependency on zope.i18nmessageid
+
+- better error message when finding persistent objects in Extras
 
 
 1.1 (2011-01-31)
