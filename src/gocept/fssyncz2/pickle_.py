@@ -23,7 +23,7 @@ class DuplicateOIdPreventingPickler(
             if isinstance(oid, str):
                 if oid in seen:
                     raise RuntimeError(
-                        'OId %s doppelt: %s, %s' % (oid, seen[oid], path))
+                        'Duplicate OId %r: %s, %s' % (oid, seen[oid], path))
                 seen[oid] = path
         zope.xmlpickle.xmlpickle._PicklerThatSortsDictItems.save(self, obj)
         path.pop()
