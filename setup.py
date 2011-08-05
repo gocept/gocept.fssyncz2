@@ -51,7 +51,7 @@ setup(name='gocept.fssyncz2',
           'zope.security',
           'zope.traversing',
           'zope.xmlpickle',
-#          'Zope2',
+#          'Zope2', # from 2.12 up needed here.
           ],
       extras_require=dict(test=[
           'lxml',
