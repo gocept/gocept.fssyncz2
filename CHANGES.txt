@@ -16,8 +16,6 @@ Changes
 
 - Added trove classifiers to package meta data.
 
-- First public release.
-
 
 1.2 (2011-04-10)
 ================
