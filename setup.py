@@ -10,6 +10,7 @@ setup(name='gocept.fssyncz2',
       author='gocept gmbh & co. kg',
       author_email='mail@gocept.com',
       description='zope.app.fssync integration for Zope2',
+      url='http://pypi.python.org/pypi/gocept.fssyncz2',
       long_description=(
         open('README.txt').read() +
         '\n\n' +
