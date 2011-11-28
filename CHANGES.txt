@@ -6,6 +6,9 @@ Changes
 1.4 (unreleased)
 ================
 
+- Fixed a bug which prevented strings containing the sequence ]]> from being
+  dumped and loaded back, giving rise to ill-formed XML pickles.
+
 - Cleaned up a little: removed an unused testdata directory.
 
 

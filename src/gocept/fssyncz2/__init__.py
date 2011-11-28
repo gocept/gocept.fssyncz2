@@ -38,13 +38,46 @@ original_SyncTask__init__ = zope.fssync.task.SyncTask.__init__
 zope.fssync.task.SyncTask.__init__ = SyncTask__init__
 
 
+def _convert_sub(string):
+    # This is the converter almost straight from zope.xmlpickle.ppml but with
+    # an added encoding for >. Maybe this change should be merged upstream, or
+    # maybe we should give up on retaining \r and always use CDATA (though
+    # splitting the string into several sections where it contains the
+    # sequence ]]>, ]] going into one, > into the other).
+
+    # We don't want to get returns "normalized away, so we quote them
+    # This means we can't use cdata.
+    rpos = string.find('\r')
+    lpos = string.find('<')
+    gpos = string.find('>')
+    apos = string.find('&')
+
+    if rpos >= 0 or lpos >= 0 or gpos >= 0 or apos >= 0:
+
+        # Need to do something about special characters
+        if rpos < 0 and string.find(']]>') < 0:
+            # can use cdata
+            string = "<![CDATA[%s]]>" % string
+        else:
+            if apos >= 0:
+                string = string.replace("&", "&amp;")
+            if lpos >= 0:
+                string = string.replace("<", "&lt;")
+            if gpos >= 0:
+                string = string.replace(">", "&gt;")
+            if rpos >= 0:
+                string = string.replace("\r", "&#x0d;")
+
+    return '', string
+
+
 def convert_string(self, string):
     """Convert a string to a form that can be included in XML text"""
     encoding = ''
     if zope.xmlpickle.ppml._binary_char(string):
         encoding = 'string_escape'
         string = '\n'.join(s.encode(encoding) for s in string.split('\n'))
-    _, string = zope.xmlpickle.ppml._convert_sub(string)
+    _, string = _convert_sub(string)
     return encoding, string
 
 zope.xmlpickle.ppml.String.convert = convert_string
@@ -52,7 +85,7 @@ zope.xmlpickle.ppml.String.convert = convert_string
 
 def convert_unicode(self, string):
     encoding = 'unicode_escape'
-    _, string = zope.xmlpickle.ppml._convert_sub(
+    _, string = _convert_sub(
         '\n'.join(s.encode(encoding) for s in string.split('\n')))
     return encoding, string
 
