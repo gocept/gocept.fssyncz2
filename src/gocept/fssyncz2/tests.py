@@ -666,6 +666,16 @@ class SanityCheckTest(BaseFileSystemTests):
             self.assertEquals(stat['diff_files'], [])
             self.assertEquals(stat['diff_folder'], [])
 
+    def test_roundtrip_with_strings_containing_cdata_end_sequence(self):
+        self.app['base'].manage_addFile('goo', 'foo ]]> bar')
+
+        gocept.fssyncz2.main.dump(
+            self.host, 'base', self.credentials, self.repository)
+        gocept.fssyncz2.main.load(
+            self.host, 'base', self.credentials, self.repository)
+
+        self.assertEqual(self.app['base']['goo'].data, 'foo ]]> bar')
+
 
 class RoundTripTest(BaseFileSystemTests):
 
