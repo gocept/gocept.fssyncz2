@@ -3,7 +3,7 @@ Changes
 =======
 
 
-1.4 (unreleased)
+1.4 (2011-11-28)
 ================
 
 - Fixed a bug which prevented strings containing the sequence ]]> from being
