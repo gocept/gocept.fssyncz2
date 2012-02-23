@@ -195,42 +195,39 @@ class FolderTest(Testing.ZopeTestCase.FunctionalTestCase):
         self.assertEquals("""\
   <entry name="foo"
 """, grep('<entry', unsnarf(response, 'folder/@@Zope/Entries.xml')))
-        self.assertTrue("""\
+        self.assertTrue("""
+  <dictionary>
+    <item key="__ac_local_roles__">
         <dictionary>
-          <item key="__ac_local_roles__">
-              <dictionary>
-                <item key="test_user_1_">
-                    <list>
-                      <string>Owner</string>
-                    </list>
-                </item>
-              </dictionary>
-          </item>
-          <item key="_owner">
-              <tuple>
-                <list>
-                  <string>test_folder_1_</string>
-                  <string>acl_users</string>
-                </list>
-                <string>test_user_1_</string>
-              </tuple>
-          </item>
-          <item>
-            <key> <string>a</string> </key>
-            <value> <string>asdf</string> </value>
-          </item>
-          <item>
-            <key> <string>b</string> </key>
-            <value> <string>bsdf</string> </value>
-          </item>
-          <item key="id">
-              <string>folder</string>
-          </item>
-          <item key="title">
-              <string></string>
+          <item key="test_user_1_">
+              <list>
+                <string>Owner</string>
+              </list>
           </item>
         </dictionary>
-""", unsnarf(response, '@@Zope/Extra/folder/attributes'))
+    </item>
+    <item key="_owner">
+        <tuple>
+          <list>
+            <string>test_folder_1_</string>
+            <string>acl_users</string>
+          </list>
+          <string>test_user_1_</string>
+        </tuple>
+    </item>
+    <item>
+      <key> <string>a</string> </key>
+      <value> <string>asdf</string> </value>
+    </item>
+    <item>
+      <key> <string>b</string> </key>
+      <value> <string>bsdf</string> </value>
+    </item>
+    <item key="title">
+        <string></string>
+    </item>
+  </dictionary>
+""" in unsnarf(response, '@@Zope/Extra/folder/attributes').getvalue())
 
     def test_folder_attributes_are_unpickled(self):
         snarf = """\
