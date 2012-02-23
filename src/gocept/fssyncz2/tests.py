@@ -10,10 +10,9 @@ import Testing.ZopeTestCase
 import doctest
 import gocept.fssyncz2.main
 import gocept.fssyncz2.testing
-import gocept.fssyncz2.traversing
 import httplib
 import lxml
-import os.path
+import os
 import pickle
 import pyquery
 import random
@@ -23,8 +22,6 @@ import transaction
 import unittest
 import urllib2
 import zope.app.fssync.main
-import zope.fssync.synchronizer
-import zope.fssync.tests.test_task
 import zope.testbrowser.browser
 
 
