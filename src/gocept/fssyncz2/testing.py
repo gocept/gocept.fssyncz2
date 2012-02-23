@@ -7,8 +7,6 @@ import Testing.ZopeTestCase
 import Testing.ZopeTestCase.layer
 import re
 import zope.fssync.snarf
-import zope.fssync.tests.test_task
-import zope.fssync.synchronizer
 import Testing.ZopeTestCase.utils
 
 
@@ -140,8 +138,8 @@ class DatabaseIterator(object):
             try:
                 object = self.connection.get(oid)
             except POSKeyError:
-                # XXX warg. For some reason the oids we get back might refer
-                # to non-existing objects, although the database seems consistent.
+                # XXX warg. For some reason the oids we get back might refer to
+                # non-existing objects, although the database seems consistent.
                 log = logging.getLogger("gocept.zodb")
                 log.warn("Found POSKeyError while iterating over database. "
                     "OID: %s" % oid_repr(oid))
