@@ -1,3 +1,0 @@
-include *.txt
-recursive-include src *.txt *.zcml
-recursive-include src/gocept/fssyncz2/testdata *
