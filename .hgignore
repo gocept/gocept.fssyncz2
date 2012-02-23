@@ -1,7 +1,10 @@
+syntax: glob
+
 .installed.cfg
 Products
 bin
 develop-eggs
+dist
 downloads
 dump*
 eggs
