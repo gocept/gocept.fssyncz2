@@ -31,8 +31,19 @@ class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
         2
 
         """
+        ignored_items = self.ignored_items
         for key, value in self.context.objectItems():
+            if key in ignored_items:
+                continue
             yield (key or '__empty__', value)
+
+    @property
+    def ignored_items(self):
+        try:
+            ignore_file = self.context['fssync-dump-ignore']
+        except KeyError:
+            return []
+        return ignore_file.source.splitlines()
 
     def __setitem__(self, key, value):
         """Sets a folder item.

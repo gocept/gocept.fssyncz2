@@ -41,3 +41,12 @@ buildout for example), like this::
 Then you can dump your ZODB to the configured filesystem location with
 ``bin/fssync dump`` and load the data stored on the filesystem into the
 ZODB with ``bin/fssync load``.
+
+
+Ignoring objects
+================
+
+If you want to exclude some objects from being dumped (e.g. user data that
+changes often), create a "Restrucured Text Document" named
+``fssync-dump-ignore`` in the parent folder. This file may contain one object
+name per line that should be excluded from dumping.

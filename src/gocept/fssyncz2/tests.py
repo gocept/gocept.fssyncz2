@@ -2,6 +2,7 @@
 # Copyright (c) 2011 gocept gmbh & co. kg
 # See also LICENSE.txt
 
+from Products.ZReST.ZReST import manage_addZReST
 from gocept.fssyncz2.testing import unsnarf, grep
 import Missing
 import OFS.SimpleItem
@@ -299,6 +300,22 @@ class FolderTest(Testing.ZopeTestCase.FunctionalTestCase):
         self.assertEqual('<File at /folder2/foo>',
                          repr(self.app['folder2']['foo']))
         self.assertEqual('bar', self.app['folder2']['foo'].data)
+
+    def test_items_in_ignore_file_are_not_dumped(self):
+        self.app.manage_addFolder('folder')
+        self.app['folder'].manage_addFile('foo', 'one')
+        self.app['folder'].manage_addFile('bar', 'two')
+        self.app['folder'].manage_addFile('baz', 'three')
+        manage_addZReST(self.app['folder'], 'fssync-dump-ignore')
+        ignore = self.app['folder']['fssync-dump-ignore']
+        ignore.source = 'bar\nbaz'
+        response = self.publish(
+            '/folder/@@toFS.snarf', basic='manager:asdf')
+        self.assertEquals("""\
+  <entry name="foo"
+  <entry name="fssync-dump-ignore"
+""", grep('<entry', unsnarf(response, 'folder/@@Zope/Entries.xml'),
+          sort=True))
 
 
 class PythonScriptTest(Testing.ZopeTestCase.FunctionalTestCase):
