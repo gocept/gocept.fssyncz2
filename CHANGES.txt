@@ -3,7 +3,7 @@ Changes
 =======
 
 
-1.5 (unreleased)
+1.5 (2012-02-23)
 ================
 
 - Add ignore mechanism (#10483).
