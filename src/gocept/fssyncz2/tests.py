@@ -35,8 +35,8 @@ class Zope2ObjectsTest(unittest.TestCase):
             pickle.dumps({'foo': Missing.Value})
         except TypeError, e:
             self.fail(e)
-        self.assert_("(dp0\nS'foo'\np1\nNs.",
-                     repr(pickle.dumps({'foo': Missing.Value})))
+        self.assertEqual(
+            "(dp0\nS'foo'\np1\nNs.", pickle.dumps({'foo': Missing.Value}))
 
 
 class ViewTests(Testing.ZopeTestCase.FunctionalTestCase):
@@ -448,36 +448,41 @@ class EncodingTest(Testing.ZopeTestCase.FunctionalTestCase):
         self.app._setObject('object', OFS.SimpleItem.SimpleItem())
         self.app['object'].foo = '\xf6'
         response = self.publish('/object/@@toFS.snarf', basic='manager:asdf')
-        self.assert_('<string encoding="string_escape">\\xf6</string>' in
-                     response.getBody())
+        self.assertTrue(
+            '<string encoding="string_escape">\\xf6</string>'
+            in response.getBody())
 
     def test_string_encoding_cdata(self):
         self.app._setObject('object', OFS.SimpleItem.SimpleItem())
         self.app['object'].foo = '<\xf6&>'
         response = self.publish('/object/@@toFS.snarf', basic='manager:asdf')
-        self.assert_('<string encoding="string_escape"><![CDATA[<\\xf6&>]]></string>' in
-                     response.getBody())
+        self.assertTrue(
+            '<string encoding="string_escape"><![CDATA[<\\xf6&>]]></string>'
+            in response.getBody())
 
     def test_string_encoding_cdata_ampersand(self):
         self.app._setObject('object', OFS.SimpleItem.SimpleItem())
         self.app['object'].foo = 'asdf&'
         response = self.publish('/object/@@toFS.snarf', basic='manager:asdf')
-        self.assert_('<string><![CDATA[asdf&]]></string>' in
-                     response.getBody())
+        self.assertTrue(
+            '<string><![CDATA[asdf&]]></string>'
+            in response.getBody())
 
     def test_unicode_encoding(self):
         self.app._setObject('object', OFS.SimpleItem.SimpleItem())
         self.app['object'].foo = u'\xf6'
         response = self.publish('/object/@@toFS.snarf', basic='manager:asdf')
-        self.assert_('<unicode encoding="unicode_escape">\\xf6</unicode>' in
-                     response.getBody())
+        self.assertTrue(
+            '<unicode encoding="unicode_escape">\\xf6</unicode>'
+            in response.getBody())
 
     def test_unicode_encoding_cdata(self):
         self.app._setObject('object', OFS.SimpleItem.SimpleItem())
         self.app['object'].foo = u'<\xf6&>'
         response = self.publish('/object/@@toFS.snarf', basic='manager:asdf')
-        self.assert_('<unicode encoding="unicode_escape"><![CDATA[<\\xf6&>]]></unicode>' in
-                     response.getBody())
+        self.assertTrue(
+            '<unicode encoding="unicode_escape"><![CDATA[<\\xf6&>]]></unicode>'
+            in response.getBody())
 
     def test_no_newline_escape(self):
         self.app._setObject('object', OFS.SimpleItem.SimpleItem())
@@ -485,8 +490,9 @@ class EncodingTest(Testing.ZopeTestCase.FunctionalTestCase):
 Line 02
 Line 03"""
         response = self.publish('/object/@@toFS.snarf', basic='manager:asdf')
-        self.assert_('<string>Line 01\nLine 02\nLine 03</string>' in
-                     response.getBody())
+        self.assertTrue(
+            '<string>Line 01\nLine 02\nLine 03</string>'
+            in response.getBody())
 
 
 class BaseFileSystemTests(Testing.ZopeTestCase.FunctionalTestCase):
