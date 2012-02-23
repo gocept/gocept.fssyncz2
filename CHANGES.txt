@@ -6,7 +6,7 @@ Changes
 1.5 (unreleased)
 ================
 
-- Nothing changed yet.
+- Add ignore mechanism (#10483).
 
 
 1.4 (2011-11-28)
