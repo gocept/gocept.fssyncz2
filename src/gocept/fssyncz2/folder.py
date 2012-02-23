@@ -39,9 +39,8 @@ class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
 
     @property
     def ignored_items(self):
-        try:
-            ignore_file = self.context['fssync-dump-ignore']
-        except KeyError:
+        ignore_file = self.context._getOb('fssync-dump-ignore', None)
+        if ignore_file is None:
             return []
         return ignore_file.source.splitlines()
 
