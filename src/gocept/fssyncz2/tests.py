@@ -1,5 +1,5 @@
 # -* coding: utf-8 -*-
-# Copyright (c) 2011 gocept gmbh & co. kg
+# Copyright (c) 2011-2012 gocept gmbh & co. kg
 # See also LICENSE.txt
 
 from Products.ZReST.ZReST import manage_addZReST
@@ -531,6 +531,7 @@ class BaseFileSystemTests(Testing.ZopeTestCase.FunctionalTestCase):
         # save host and credentials
         self.host = 'localhost:%s' % self.layer.port
         self.credentials = 'manager:asdf'
+        transaction.commit()
 
     def tearDown(self):
         shutil.rmtree(self.repository)
@@ -556,7 +557,6 @@ class UserFolderTest(BaseFileSystemTests):
     def test_userfolder_is_not_duplicated_after_checkout_checkin(self):
         self.app.manage_addFolder('folder')
         self.app['folder'].manage_addProduct['OFSP'].manage_addUserFolder()
-        import transaction
         transaction.commit()
         self.assertTrue(self.app['folder'].__allow_groups__.aq_base is
                         self.app['folder']['acl_users'].aq_base)
