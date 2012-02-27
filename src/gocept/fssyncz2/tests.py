@@ -312,7 +312,7 @@ class FolderTest(Testing.ZopeTestCase.FunctionalTestCase):
         ignore.source = 'bar\nbaz'
         response = self.publish(
             '/folder/@@toFS.snarf', basic='manager:asdf')
-        self.assertEquals("""\
+        self.assertEqual("""\
   <entry name="foo"
   <entry name="fssync-dump-ignore"
 """, grep('<entry', unsnarf(response, 'folder/@@Zope/Entries.xml'),
