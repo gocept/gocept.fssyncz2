@@ -757,7 +757,7 @@ class RoundTripTest(BaseFileSystemTests):
             self.host, 'base', self.credentials, self.repository)
         # delete foo in base
         self.app['base'].manage_delObjects('foo')
-        # update repository
+        # update the repository to get rid of out-of-sync errors
         gocept.fssyncz2.main.dump(
             self.host, 'base', self.credentials, self.repository)
 
@@ -766,7 +766,6 @@ class RoundTripTest(BaseFileSystemTests):
 
         # foo is back in database and should be removed now
         self.assertEquals(self.app['base']['foo'].data, 'Content of foo')
-        # update the repository to get rid of out-of-sync errors
         gocept.fssyncz2.main.load(
             self.host, 'base', self.credentials, self.repository)
         # foo is now removed
