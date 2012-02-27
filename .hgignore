@@ -8,8 +8,8 @@ dist
 downloads
 dump*
 eggs
+local.cfg
 parts
 tmp*
 var
 zope.*
-.*.swp
