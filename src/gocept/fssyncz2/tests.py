@@ -54,6 +54,7 @@ class ViewTests(Testing.ZopeTestCase.FunctionalTestCase):
         self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
 
     def test_checkout_response_should_be_OK_and_a_snarf_archive(self):
+        # XXX flaky, see #10491
         browser = zope.testbrowser.browser.Browser()
         browser.addHeader('Authorization',
                           'Basic '+'manager:asdf'.encode('base64'))
