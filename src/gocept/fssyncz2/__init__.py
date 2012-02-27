@@ -1,9 +1,11 @@
-# Copyright (c) 2011 gocept gmbh & co. kg
+# Copyright (c) 2011-2012 gocept gmbh & co. kg
 # See also LICENSE.txt
 
 from zope.i18nmessageid import ZopeMessageFactory as _
 import Missing
 import cgi
+import gocept.fssyncz2.folder
+import gocept.fssyncz2.pickle_
 import pickle
 import zope.app.fssync.browser
 import zope.app.fssync.syncer
@@ -14,9 +16,8 @@ import zope.fssync.synchronizer
 import zope.fssync.task
 import zope.interface
 import zope.security.proxy
-import zope.xmlpickle.ppml
-import gocept.fssyncz2.pickle_
 import zope.traversing.interfaces
+import zope.xmlpickle.ppml
 
 
 def save(self, obj):
@@ -150,9 +151,28 @@ class CheckinCommitBase(object):
 class Checkin(CheckinCommitBase, zope.fssync.task.Checkin):
 
     def perform(self, container, name, fspath):
+        temp_name = name + '__gocept_fssyncz2_load_in_progress_'
         if container.hasObject(name):
-            container.manage_delObjects([name])
-        zope.fssync.task.Checkin.perform(self, container, name, fspath)
+            container.manage_renameObject(name, temp_name)
+        super(Checkin, self).perform(container, name, fspath)
+        if container.hasObject(temp_name):
+            self.restore_ignored_objects(
+                container[temp_name], container[name])
+            container.manage_delObjects([temp_name])
+
+    def restore_ignored_objects(self, old, new):
+        synchronizer = self.getSynchronizer(new)
+        if not isinstance(
+            synchronizer, gocept.fssyncz2.folder.FolderSynchronizer):
+            return
+        for name, obj in new.objectItems():
+            try:
+                old_obj = old[name]
+            except KeyError:
+                continue
+            self.restore_ignored_objects(old_obj, obj)
+        new.manage_pasteObjects(
+            old.manage_cutObjects(synchronizer.ignored_items))
 
 
 class Commit(CheckinCommitBase, zope.fssync.task.Commit):

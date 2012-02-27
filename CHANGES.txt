@@ -6,7 +6,7 @@ Changes
 1.6 (unreleased)
 ================
 
-- Nothing changed yet.
+- Made ignore mechanism actually ignore objects on loading a dump. (#10488)
 
 
 1.5 (2012-02-23)

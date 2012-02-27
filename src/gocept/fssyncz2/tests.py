@@ -318,6 +318,40 @@ class FolderTest(Testing.ZopeTestCase.FunctionalTestCase):
 """, grep('<entry', unsnarf(response, 'folder/@@Zope/Entries.xml'),
           sort=True))
 
+    def test_items_in_ignore_file_are_kept_on_load(self):
+        self.app.manage_addFolder('folder')
+        folder = self.app['folder']
+        folder.manage_addFile('foo', 'one')
+        folder.manage_addFile('bar', 'two')
+        manage_addZReST(folder, 'fssync-dump-ignore')
+        ignore = folder['fssync-dump-ignore']
+        ignore.source = 'bar'
+
+        folder.manage_addFolder('subfolder')
+        subfolder = folder['subfolder']
+        subfolder.manage_addFile('baz', 'one')
+        subfolder.manage_addFile('qux', 'two')
+        manage_addZReST(subfolder, 'fssync-dump-ignore')
+        ignore = subfolder['fssync-dump-ignore']
+        ignore.source = 'qux'
+
+        app_object_ids = sorted(self.app.objectIds())
+
+        response = self.publish(
+            '/folder/@@toFS.snarf', basic='manager:asdf')
+        self.publish('/@@checkin.snarf?note=test&name=folder&src=folder',
+                     basic='manager:asdf',
+                     request_method='POST',
+                     env={'CONTENT_TYPE': 'application/x-snarf'},
+                     stdin=StringIO.StringIO(response.getBody()),
+                     handle_errors=False)
+
+        self.assertEqual(app_object_ids, sorted(self.app.objectIds()))
+        self.assertEqual(['bar', 'foo', 'fssync-dump-ignore', 'subfolder'],
+                         sorted(self.app['folder'].objectIds()))
+        self.assertEqual(['baz', 'fssync-dump-ignore', 'qux'],
+                         sorted(self.app['folder']['subfolder'].objectIds()))
+
 
 class PythonScriptTest(Testing.ZopeTestCase.FunctionalTestCase):
     """Make sure leaving out compiled code doesn't break anything.
