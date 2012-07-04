@@ -1,0 +1,18 @@
+
+<h2>Please provide username and password</h2>
+
+<form action="&dtml-URL0;<dtml-if name="QUERY_STRING">?&dtml-QUERY_STRING;</dtml-if>" method="post">
+  <table border="0" cellpadding="3">
+    <tr>
+      <td><b>Name:</b></td>
+      <td><input type="text" name="__ac_name" size="20"></td>
+    </tr><tr>
+      <td><b>Password:</b></td>
+      <td><input type="password" name="__ac_password" size="20"></td>
+    </tr><tr>
+      <td colspan="2"><br /><input type="submit" value=" Log In "></td>
+    </tr>
+  </table>
+</form>
+
+

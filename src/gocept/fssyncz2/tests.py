@@ -352,6 +352,36 @@ class FolderTest(Testing.ZopeTestCase.FunctionalTestCase):
         self.assertEqual(['baz', 'fssync-dump-ignore', 'qux'],
                          sorted(self.app['folder']['subfolder'].objectIds()))
 
+    def test_ignored_cookieuserfolder_should_restore_allow_groups(self):
+        self.app.manage_addFolder('folder')
+        folder = self.app['folder']
+
+        manage_addZReST(folder, 'fssync-dump-ignore')
+        ignore = folder['fssync-dump-ignore']
+        ignore.source = 'acl_users'
+
+        folder.manage_addProduct[
+            'CookieUserFolder'].manage_addCookieUserFolder()
+        folder.manage_addProduct[
+            'PythonScripts'].manage_addPythonScript('getLoginStatus')
+        folder['getLoginStatus'].write('return True')
+
+        transaction.commit()
+        self.assertTrue(folder.__allow_groups__.aq_base is
+                        folder['acl_users'].aq_base)
+
+        response = self.publish(
+            '/folder/@@toFS.snarf', basic='manager:asdf')
+        self.publish('/@@checkin.snarf?note=test&name=folder&src=folder',
+                     basic='manager:asdf',
+                     request_method='POST',
+                     env={'CONTENT_TYPE': 'application/x-snarf'},
+                     stdin=StringIO.StringIO(response.getBody()),
+                     handle_errors=False)
+
+        self.assertTrue(self.app['folder'].__allow_groups__.aq_base is
+                        self.app['folder']['acl_users'].aq_base)
+
 
 class PythonScriptTest(Testing.ZopeTestCase.FunctionalTestCase):
     """Make sure leaving out compiled code doesn't break anything.

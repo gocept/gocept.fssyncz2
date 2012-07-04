@@ -172,6 +172,21 @@ class Checkin(CheckinCommitBase, zope.fssync.task.Checkin):
             self.restore_ignored_objects(old_obj, obj)
         new.manage_pasteObjects(
             old.manage_cutObjects(synchronizer.ignored_items))
+        self._restore_cookie_userfolder(new)
+
+    def _restore_cookie_userfolder(self, container):
+        # XXX total kludge
+        # CookieUserFolder extends (ObjectManager, UserFolder) and thus
+        # inherits manage_afterAdd from ObjectManager, not UserFolder,
+        # so it doesn't automatically set __allow_groups__ after being pasted.
+        try:
+            from Products.CookieUserFolder.CookieUserFolder import CookieUserFolder
+        except ImportError:
+            return
+
+        for obj in container.objectValues():
+            if isinstance(obj.aq_base, CookieUserFolder):
+                container.__allow_groups__ = obj
 
 
 class Commit(CheckinCommitBase, zope.fssync.task.Commit):

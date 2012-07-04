@@ -58,6 +58,7 @@ class Zope2FunctionalLayer(object):
         Testing.ZopeTestCase.installProduct('Five')
         Testing.ZopeTestCase.installProduct('ZReST')
         Testing.ZopeTestCase.installProduct('PythonScripts')
+        Testing.ZopeTestCase.installProduct('CookieUserFolder')
         Testing.ZopeTestCase.layer.ZopeLiteLayer.setUp()
 
 

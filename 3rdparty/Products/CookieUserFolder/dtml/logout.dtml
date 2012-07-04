@@ -1,0 +1,5 @@
+<dtml-var name="standard_html_header">
+
+<h2>You have been logged out.</h2>
+
+<dtml-var name="standard_html_footer">
