@@ -1,0 +1,35 @@
+Cookie User Folder - Custom Forms: Place to store custom login pages
+ 
+    Description
+ 
+        This is where you instantiate a custom login page. Simply
+        select the type of object you want for your custom login 
+        from the Add list and fill in the contents.
+ 
+    **Warning**
+ 
+      It is *very easy* to lock yourself out of your own site if you
+      instantiate a login page that does not do the right thing
+ 
+ 
+      Check out the code in the CookieUserFolder install directory
+      under dtml/login.dtml for what a login page has to do. You
+      want to make sure that you have a *form* which posts at
+      least 2 input fields named *__ac__name* (user name) and
+      *__ac_password* (password) back.
+ 
+ 
+    **Help, I locked myself out of my own site!**
+ 
+      This can happen if you create a custom login page within
+      the CookieUserFolder which does not do the right thing.
+ 
+      In order to authenticate you can force the usage of the
+      default login page by going to:
+ 
+      http://my.site.com/acl_users/docLogin
+ 
+      Type in your name and password and hit the button. You
+      will stay on the same page, even if the authentication
+      succeeded, you can then type the desired address into your
+      browser's navigation bar.

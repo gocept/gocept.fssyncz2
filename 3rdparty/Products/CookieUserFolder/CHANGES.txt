@@ -1,0 +1,63 @@
+CookieUserFolder version and change information
+
+    1.4
+
+      Bugs fixed:
+
+        * Improved the "handing off" of authentication in situations with 
+          user folders higher up in the tree. It is still iffy but will
+          work in most cases now.
+
+
+    1.3
+
+      Bugs fixed:
+
+        * Basic HTTP auth is now used as the last resort. This prevents
+          the login screen popping up when instantiating the 
+          CookieUserFolder object and it allows FTP and WebDAV use, which
+          expect simple auth to work.
+
+        * Fixed inheritance issues with ObjectManager and UserFolder which
+          allowed me to get rid of my overridden objectids and objectItems
+          methods.
+
+        * A mangled "select" tag in the Custom Forms management page broke
+          the dropdown list of objects to add for Mozilla users.
+
+        * Changed the migration script to use the factory and not just the
+          constructor
+
+
+    1.2
+
+      Features added:
+
+        * Much-expanded README.txt and INSTALL.txt
+
+        * Added migration script that can be used to migrate user 
+          accounts from an existing standard user folder. See README.txt
+          for instructions.
+
+
+    1.1
+
+      Bugs fixed:
+
+        * If the setup had a non-cookie user folder above the login screen
+          would never go away, even if the user was valid in the user folder
+          above.
+
+          The validation mechanism now explicitly retrieves and asks the next
+          userfolder above to authenticate a user if there is one.
+
+
+    1.0
+
+        First public release
+
+    
+    0.1
+
+        Started putting the files together
+

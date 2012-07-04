@@ -1,0 +1,25 @@
+Installing the CookieUserFolder Product
+
+    You will need Zope version 2.3.0 or higher!
+
+    This product does not require any special handling after unzipping
+    and untarring it in the Zope Products directory. You should do 
+    something like::
+
+        $ cp CookieUserFolder-xyz.tgz <zope_root>/lib/python/Products
+        $ cd <zope_root>/lib/python/Products
+        $ tar zxvf CookieUserFolder-xyz.tgz
+        <watch files being decompressed>
+
+    That's all. Do not forget to restart Zope afterwards.
+
+    To help those who want to replace an existing standard Zope user 
+    folder this package now includes a script that can be run as an
+    external method from within Zope to migrate user accounts from the
+    old user folder into the Cookie User Folder. See README.txt for 
+    instructions. This migration script will only work for standard 
+    Zope user folders.
+
+    See README.txt for any other dependencies and requirements.
+
+
