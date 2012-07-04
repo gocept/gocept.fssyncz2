@@ -6,7 +6,7 @@ from setuptools import find_packages
 
 
 setup(name='gocept.fssyncz2',
-      version='1.5.2',
+      version='1.6.dev0',
       author='gocept gmbh & co. kg',
       author_email='mail@gocept.com',
       description='zope.app.fssync integration for Zope2',
