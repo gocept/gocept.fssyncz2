@@ -3,8 +3,8 @@ Changes
 =======
 
 
-1.6 (unreleased)
-================
+1.5.2 (2012-07-04)
+==================
 
 - Add workaround for CookieUserFolder to restore the ``__allow_groups__``
   pointer after load when fssync-ignoring it (#11111).
