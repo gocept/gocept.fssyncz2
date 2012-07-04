@@ -15,7 +15,6 @@ import zope.fssync.repository
 import zope.fssync.synchronizer
 import zope.fssync.task
 import zope.interface
-import zope.security.proxy
 import zope.traversing.interfaces
 import zope.xmlpickle.ppml
 
@@ -223,8 +222,8 @@ class SnarfCommit(SnarfCheckinCommitBase, zope.app.fssync.browser.SnarfCommit):
         # Monkey Patch: Zope2 request
         stream = self.request.stdin
         snarf = zope.fssync.repository.SnarfRepository(stream)
-        return zope.fssync.task.Check(getSynchronizer, snarf,
-                        raise_on_conflicts=raise_on_conflicts)
+        return zope.fssync.task.Check(
+            getSynchronizer, snarf, raise_on_conflicts=raise_on_conflicts)
 
     def run_submission(self):
         # XXX decorate
