@@ -4,10 +4,13 @@
 import Lifetime
 import StringIO
 import Testing.ZopeTestCase
-import Testing.ZopeTestCase.layer
+import Testing.ZopeTestCase.utils
+import gocept.fssyncz2
+import plone.testing
+import plone.testing.z2
+import plone.testing.zca
 import re
 import zope.fssync.snarf
-import Testing.ZopeTestCase.utils
 
 
 class Lines(StringIO.StringIO):
@@ -49,20 +52,33 @@ def grep(pattern, lines, sort=False):
     return ''.join(lines)
 
 
-class Zope2FunctionalLayer(object):
+class _ZCMLSandbox(plone.testing.zca.ZCMLSandbox):
+    """Layer which loads ZCML and resets TALES expressions on tear down.
 
-    __bases__ = (Testing.ZopeTestCase.layer.ZopeLiteLayer,)
-    __name__ = 'functional_layer'
+    CAUTION: Not to be used directly, use ZCMLLayer, see above.
+
+    """
+    defaultBases = [plone.testing.z2.STARTUP]
+
+
+class Zope2WithProducts(plone.testing.Layer):
 
     def setUp(self):
         Testing.ZopeTestCase.installProduct('Five')
         Testing.ZopeTestCase.installProduct('ZReST')
         Testing.ZopeTestCase.installProduct('PythonScripts')
         Testing.ZopeTestCase.installProduct('CookieUserFolder')
-        Testing.ZopeTestCase.layer.ZopeLiteLayer.setUp()
+        super(Zope2WithProducts, self).setUp()
 
 
-functional_layer = Zope2FunctionalLayer()
+class Zope2FunctionalLayer(_ZCMLSandbox, Zope2WithProducts):
+
+    __name__ = 'functional_layer'
+
+
+functional_layer = Zope2FunctionalLayer(
+    None, 'gocept.fssyncz2:ZCML', __name__, 'ftesting.zcml',
+    gocept.fssyncz2)
 
 
 class Zope2ServerLayer(Zope2FunctionalLayer):
@@ -87,7 +103,9 @@ class Zope2ServerLayer(Zope2FunctionalLayer):
         Lifetime.shutdown(0, fast=1)
 
 
-server_layer = Zope2ServerLayer()
+server_layer = Zope2ServerLayer(
+    None, 'gocept.fssyncz2:ZCML', __name__, 'ftesting.zcml',
+    gocept.fssyncz2)
 
 
 # gocept.zodb.dbiterator

@@ -55,6 +55,7 @@ setup(name='gocept.fssyncz2',
           ],
       extras_require=dict(test=[
           'lxml',
+          'plone.testing',
           'pyquery',
           ]),
       entry_points=dict(console_scripts=[
