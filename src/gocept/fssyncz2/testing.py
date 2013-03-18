@@ -140,7 +140,7 @@ class FileStorageOIDs(object):
 
     def getOIDs(self):
         """Return an iterable of all oids."""
-        return self.storage._index.keys()
+        return self.storage.changes._data.keys()
 
 
 class DatabaseIterator(object):
