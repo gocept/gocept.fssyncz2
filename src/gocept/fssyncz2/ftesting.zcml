@@ -1,0 +1,8 @@
+<configure
+  xmlns="http://namespaces.zope.org/zope"
+  xmlns:meta="http://namespaces.zope.org/meta">
+
+  <includeOverrides package="gocept.fssyncz2" file="overrides.zcml" />
+  <include package="gocept.fssyncz2" />
+
+</configure>
