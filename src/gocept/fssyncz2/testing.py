@@ -61,19 +61,19 @@ class _ZCMLSandbox(plone.testing.zca.ZCMLSandbox):
     defaultBases = [plone.testing.z2.STARTUP]
 
 
-class Zope2WithProducts(plone.testing.Layer):
-
-    def setUp(self):
-        Testing.ZopeTestCase.installProduct('Five')
-        Testing.ZopeTestCase.installProduct('ZReST')
-        Testing.ZopeTestCase.installProduct('PythonScripts')
-        Testing.ZopeTestCase.installProduct('CookieUserFolder')
-        super(Zope2WithProducts, self).setUp()
-
-
-class Zope2FunctionalLayer(_ZCMLSandbox, Zope2WithProducts):
+class Zope2FunctionalLayer(_ZCMLSandbox,):
 
     __name__ = 'functional_layer'
+    PRODUCTS = ['Products.Five',
+                'Products.ZReST',
+                'Products.PythonScripts',
+                'Products.CookieUserFolder']
+
+    def setUp(self):
+        super(Zope2FunctionalLayer, self).setUp()
+        with plone.testing.z2.zopeApp(self['zodbDB']) as app:
+            for product in self.PRODUCTS:
+                plone.testing.z2.installProduct(app, product)
 
 
 functional_layer = Zope2FunctionalLayer(
