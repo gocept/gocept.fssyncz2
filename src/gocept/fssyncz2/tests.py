@@ -406,10 +406,19 @@ class PythonScriptTest(Testing.ZopeTestCase.FunctionalTestCase):
         response = self.publish('/folder/@@toFS.snarf', basic='manager:asdf')
         self.assertFalse('"_code"' in ''.join(unsnarf(response, 'folder/foo')))
 
+    def test_varnames_are_left_out(self):
+        self.app['folder'].manage_addProduct['PythonScripts'
+                                             ].manage_addPythonScript('foo')
+        self.app['folder']['foo'].write('x = 1; y = 2')
+        self.assertTrue(self.app['folder']['foo'].func_code.co_varnames)
+        response = self.publish('/folder/@@toFS.snarf', basic='manager:asdf')
+        self.assertFalse(
+            '"co_varnames"' in ''.join(unsnarf(response, 'folder/foo')))
+
     def test_reloaded_pythonscript_runs_correctly(self):
         self.app['folder'].manage_addProduct['PythonScripts'
                                              ].manage_addPythonScript('foo')
-        self.app['folder']['foo'].write('return 42')
+        self.app['folder']['foo'].write('x = 42; return x')
         response = self.publish('/folder/@@toFS.snarf', basic='manager:asdf')
         self.publish('/@@checkin.snarf?note=test&name=folder2&src=folder',
                      basic='manager:asdf',

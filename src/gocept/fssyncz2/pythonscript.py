@@ -15,16 +15,19 @@ class Pickler(gocept.fssyncz2.pickle_.UnwrappedPickler):
 
     def dump(self, writeable):
         _code = self.context.__dict__.pop('_code', no_code_marker)
+        co_varnames = self.context.func_code.co_varnames
+        del self.context.func_code.co_varnames
         try:
             super(Pickler, self).dump(writeable)
         finally:
-            pass
             if _code is not no_code_marker:
                 self._code = _code
+            self.co_varnames = co_varnames
 
 
 def setstate(self, state):
     state.setdefault('_code', None)
+    state.setdefault('co_varnames', ())
     orig_setstate(self, state)
     self._compile()
 
