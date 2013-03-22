@@ -6,7 +6,8 @@ Changes
 1.6 (unreleased)
 ================
 
-- Nothing changed yet.
+- Don't dump the co_varnames attribute of PythonScripts as it is neither
+  stable nor needed in the dump.
 
 
 1.5.2 (2012-07-04)
