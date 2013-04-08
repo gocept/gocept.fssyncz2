@@ -58,6 +58,10 @@ class ViewTests(Testing.ZopeTestCase.FunctionalTestCase):
         browser = zope.testbrowser.browser.Browser()
         browser.addHeader('Authorization',
                           'Basic '+'manager:asdf'.encode('base64'))
+        # The output contains the length of each piece which, in turn, depends
+        # on the length of the etag in the case of folder/file. We need to
+        # make sure that the length of the etag is deterministic.
+        self.app['folder']['file']._EtagSupport__etag = 'ts65399125.34'
         try:
             browser.open(
                 'http://localhost:%s/folder/@@toFS.snarf' % self.layer.port)
