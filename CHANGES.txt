@@ -6,7 +6,8 @@ Changes
 1.7 (unreleased)
 ================
 
-- Nothing changed yet.
+- Stabilised a test that depends on a file object's etag to have a
+  deterministic length. (#10491)
 
 
 1.6 (2013-03-22)
