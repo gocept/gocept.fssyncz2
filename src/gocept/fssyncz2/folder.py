@@ -62,7 +62,10 @@ class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
         value._setId(key)
         self.context._setObject(
             key, value, set_owner=False, suppress_events=True)
-        if isinstance(value, AccessControl.User.BasicUserFolder):
+        if key == 'acl_users':  # User folders are _always_ unter this name
+                                # in Zope 2. This is less magic than some
+                                # subclass test which doesn't work in all
+                                # cases (like for PluggableAuthService)
             self.context.__allow_groups__ = value
 
     def __delitem__(self, key):
