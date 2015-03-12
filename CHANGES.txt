@@ -6,6 +6,8 @@ Changes
 1.7 (unreleased)
 ================
 
+- Fix restore of PluggableAuthService user folder.
+
 - Stabilised a test that depends on a file object's etag to have a
   deterministic length. (#10491)
 
