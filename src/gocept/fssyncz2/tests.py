@@ -56,8 +56,7 @@ class ViewTests(Testing.ZopeTestCase.FunctionalTestCase):
     def test_checkout_response_should_be_OK_and_a_snarf_archive(self):
         # XXX flaky, see #10491
         browser = zope.testbrowser.browser.Browser()
-        browser.addHeader('Authorization',
-                          'Basic '+'manager:asdf'.encode('base64'))
+        browser.addHeader('Authorization', 'manager:asdf')
         # The output contains the length of each piece which, in turn, depends
         # on the length of the etag in the case of folder/file. We need to
         # make sure that the length of the etag is deterministic.
@@ -141,7 +140,7 @@ class ViewTests(Testing.ZopeTestCase.FunctionalTestCase):
         conn.putheader('Content-Type', 'application/x-snarf')
         conn.putheader('Content-Length', str(len(snarf)))
         conn.putheader('Authorization',
-                       'Basic '+'manager:asdf'.encode('base64'))
+                       'Basic ' + 'manager:asdf'.encode('base64').strip())
         conn.putheader('Host', 'localhost:%s' % self.layer.port)
         conn.putheader('Connection', 'close')
         conn.endheaders()
