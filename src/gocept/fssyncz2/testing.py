@@ -112,10 +112,10 @@ server_layer = Zope2ServerLayer(
 # This is copied from Steppkes. If it makes eggified to the pypi some day,
 # delete this code and use the egg instead
 
-import logging
-from zope.interface import Interface, implements
-from ZODB.POSException import POSKeyError
-from ZODB.utils import oid_repr
+import logging  # NOQA
+from zope.interface import Interface, implements  # NOQA
+from ZODB.POSException import POSKeyError  # NOQA
+from ZODB.utils import oid_repr  # NOQA
 
 
 class IDatabaseIterator(Interface):
@@ -162,6 +162,6 @@ class DatabaseIterator(object):
                 # non-existing objects, although the database seems consistent.
                 log = logging.getLogger("gocept.zodb")
                 log.warn("Found POSKeyError while iterating over database. "
-                    "OID: %s" % oid_repr(oid))
+                         "OID: %s" % oid_repr(oid))
                 continue
             yield object

@@ -131,7 +131,7 @@ class ViewTests(Testing.ZopeTestCase.FunctionalTestCase):
     </state>
   </initialized_object>
 </pickle>
-"""
+"""  # NOQA
         self.assertFalse('folder2' in self.app.objectIds())
 
         conn = httplib.HTTPConnection('localhost:%s' % self.layer.port)

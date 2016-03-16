@@ -22,7 +22,10 @@ def main(host, folder, credentials, repository):
     recipe = zc.recipe.egg:scripts
     eggs = gocept.fssyncz2
     extra-paths = ${zope2:location}/lib/python
-    arguments = host='${instance:http-address}', folder='myapp', repository='${buildout:directory}/dump', credentials='${instance:user}'
+    arguments = host='${instance:http-address}'
+        folder='myapp'
+        repository='${buildout:directory}/dump'
+        credentials='${instance:user}'
     """
 
     if len(sys.argv) != 2:
