@@ -11,7 +11,7 @@ path = []
 
 
 class DuplicateOIdPreventingPickler(
-    zope.xmlpickle.xmlpickle._PicklerThatSortsDictItems):
+        zope.xmlpickle.xmlpickle._PicklerThatSortsDictItems):
 
     def save(self, obj):
         path.append(repr(obj))

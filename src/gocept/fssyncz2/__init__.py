@@ -162,7 +162,7 @@ class Checkin(CheckinCommitBase, zope.fssync.task.Checkin):
     def restore_ignored_objects(self, old, new):
         synchronizer = self.getSynchronizer(new)
         if not isinstance(
-            synchronizer, gocept.fssyncz2.folder.FolderSynchronizer):
+                synchronizer, gocept.fssyncz2.folder.FolderSynchronizer):
             return
         for name, obj in new.objectItems():
             try:
@@ -180,7 +180,9 @@ class Checkin(CheckinCommitBase, zope.fssync.task.Checkin):
         # inherits manage_afterAdd from ObjectManager, not UserFolder,
         # so it doesn't automatically set __allow_groups__ after being pasted.
         try:
-            from Products.CookieUserFolder.CookieUserFolder import CookieUserFolder
+            from Products.CookieUserFolder.CookieUserFolder import (
+                CookieUserFolder
+            )
         except ImportError:
             return
 
@@ -209,7 +211,7 @@ class SnarfCheckinCommitBase(object):
 
 
 class SnarfCheckin(
-    SnarfCheckinCommitBase, zope.app.fssync.browser.SnarfCheckin):
+        SnarfCheckinCommitBase, zope.app.fssync.browser.SnarfCheckin):
     """Monkey Patch: Zope2 request behaviour."""
 
     def run_submission(self):

@@ -1,7 +1,6 @@
 # Copyright (c) 2011 gocept gmbh & co. kg
 # See also LICENSE.txt
 
-import AccessControl.User
 import OFS.Folder
 import copy_reg
 import zope.fssync.synchronizer
@@ -108,7 +107,7 @@ class FolderSynchronizer(zope.fssync.synchronizer.DirectorySynchronizer):
         # duplicates of objects referenced elsewhere.
         for key, value in dictionary.items():
             if (isinstance(value, persistent.Persistent) or
-                isinstance(key, persistent.Persistent)):
+                    isinstance(key, persistent.Persistent)):
                 raise RuntimeError(
                     'Persistent object in Extras of %s found: %s: %s' % (
                         self.context.absolute_url(), key, value))
