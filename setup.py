@@ -19,7 +19,7 @@ setup(
     packages=find_packages('src'),
     include_package_data=True,
     package_dir={'': 'src'},
-    license='ZPL 2.1',
+    license='MIT',
     namespace_packages=['gocept'],
     classifiers=[
         'Development Status :: 4 - Beta',
@@ -29,7 +29,7 @@ setup(
         'Framework :: Zope2',
         'Intended Audience :: Developers',
         'License :: OSI Approved',
-        'License :: OSI Approved :: Zope Public License',
+        'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
