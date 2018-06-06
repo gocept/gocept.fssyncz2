@@ -12,9 +12,9 @@ setup(name='gocept.fssyncz2',
       description='zope.app.fssync integration for Zope2',
       url='http://pypi.python.org/pypi/gocept.fssyncz2',
       long_description=(
-        open('README.txt').read() +
+        open('README.rst').read() +
         '\n\n' +
-        open('CHANGES.txt').read()),
+        open('CHANGES.rst').read()),
       packages=find_packages('src'),
       include_package_data=True,
       package_dir={'': 'src'},
