@@ -24,6 +24,7 @@ def save(self, obj):
         obj = None
     return original_save(self, obj)
 
+
 original_save = pickle.Pickler.save
 pickle.Pickler.save = save
 
@@ -33,6 +34,7 @@ def SyncTask__init__(self, *args, **kw):
     gocept.fssyncz2.pickle_.seen.clear()
     gocept.fssyncz2.pickle_.path[:] = []
     original_SyncTask__init__(self, *args, **kw)
+
 
 original_SyncTask__init__ = zope.fssync.task.SyncTask.__init__
 zope.fssync.task.SyncTask.__init__ = SyncTask__init__
@@ -80,6 +82,7 @@ def convert_string(self, string):
     _, string = _convert_sub(string)
     return encoding, string
 
+
 zope.xmlpickle.ppml.String.convert = convert_string
 
 
@@ -88,6 +91,7 @@ def convert_unicode(self, string):
     _, string = _convert_sub(
         '\n'.join(s.encode(encoding) for s in string.split('\n')))
     return encoding, string
+
 
 zope.xmlpickle.ppml.Unicode.convert = convert_unicode
 
@@ -99,6 +103,7 @@ def unconvert_string(encoding, string):
         raise ValueError('bad encoding', encoding)
     return string
 
+
 zope.xmlpickle.ppml.unconvert_string = unconvert_string
 
 
@@ -109,6 +114,7 @@ def unconvert_unicode(encoding, string):
     elif encoding:
         raise ValueError('bad encoding', encoding)
     return string
+
 
 zope.xmlpickle.ppml.unconvert_unicode = unconvert_unicode
 
@@ -127,6 +133,7 @@ def getSynchronizer(obj, raise_error=True):
             raise zope.fssync.synchronizer.MissingSynchronizer(dn)
         return None
     return factory(obj)
+
 
 zope.app.fssync.syncer.getSynchronizer = getSynchronizer
 
