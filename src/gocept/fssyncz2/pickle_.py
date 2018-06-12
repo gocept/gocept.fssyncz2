@@ -17,7 +17,7 @@ class DuplicateOIdPreventingPickler(
         path.append(repr(obj))
         try:
             oid = obj._p_oid
-        except:
+        except Exception:
             pass
         else:
             if isinstance(oid, str):
@@ -46,5 +46,6 @@ def dump(self, writeable):
     if generator is not None:
         pickler.persistent_id = generator.id
     pickler.dump(self.context)
+
 
 zope.fssync.pickle.StandardPickler.dump = dump

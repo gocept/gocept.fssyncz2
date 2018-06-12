@@ -125,4 +125,5 @@ def reduce(self):
             del state[key]
     return rv
 
+
 copy_reg.dispatch_table[OFS.Folder.Folder] = reduce
