@@ -3,6 +3,7 @@ syntax: glob
 *.egg-info
 *.pyc
 .installed.cfg
+.pytest_cache
 bin
 develop-eggs
 dist
