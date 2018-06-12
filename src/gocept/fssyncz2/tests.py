@@ -2,6 +2,9 @@
 # Copyright (c) 2011-2012 gocept gmbh & co. kg
 # See also LICENSE.txt
 
+from OFS.Folder import manage_addFolder
+from OFS.Image import manage_addFile
+from OFS.userfolder import manage_addUserFolder
 from Products.ZReST.ZReST import manage_addZReST
 from gocept.fssyncz2.testing import unsnarf, grep
 import Missing
@@ -49,8 +52,8 @@ class ViewTests(Testing.ZopeTestCase.FunctionalTestCase):
 
     def setUp(self):
         Testing.ZopeTestCase.ZopeTestCase.setUp(self)
-        self.app.manage_addFolder('folder')
-        self.app['folder'].manage_addFile('file', 'foo')
+        manage_addFolder(self.app, 'folder')
+        manage_addFile(self.app['folder'], 'file', 'foo')
         self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
 
     def test_checkout_response_should_be_OK_and_a_snarf_archive(self):
@@ -161,9 +164,9 @@ class ReferencesTest(Testing.ZopeTestCase.FunctionalTestCase):
         self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
 
     def test_multiple_references_to_one_object_abort_checkout(self):
-        self.app.manage_addFolder('folder')
-        self.app['folder'].manage_addFile('foo', '')
-        self.app['folder'].manage_addFile('bar', '')
+        manage_addFolder(self.app, 'folder')
+        manage_addFile(self.app['folder'], 'foo', '')
+        manage_addFile(self.app['folder'], 'bar', '')
         response = self.publish(
             '/folder/@@toFS.snarf', basic='manager:asdf')
         body = response.getBody()
@@ -188,8 +191,8 @@ class FolderTest(Testing.ZopeTestCase.FunctionalTestCase):
         self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
 
     def test_folder_is_pickled_with_entries_and_attributes(self):
-        self.app.manage_addFolder('folder')
-        self.app['folder'].manage_addFile('foo', 'bar')
+        manage_addFolder(self.app, 'folder')
+        manage_addFile(self.app['folder'], 'foo', 'bar')
         self.app['folder'].a = 'asdf'
         self.app['folder'].b = 'bsdf'
         response = self.publish(
@@ -283,8 +286,8 @@ class FolderTest(Testing.ZopeTestCase.FunctionalTestCase):
         self.assertEqual('BAZ', folder2.baz)
 
     def test_roundtrip(self):
-        self.app.manage_addFolder('folder')
-        self.app['folder'].manage_addFile('foo', 'bar')
+        manage_addFolder(self.app, 'folder')
+        manage_addFile(self.app['folder'], 'foo', 'bar')
         self.app['folder'].a = 'asdf'
         self.app['folder'].b = 'bsdf'
         response = self.publish(
@@ -306,10 +309,10 @@ class FolderTest(Testing.ZopeTestCase.FunctionalTestCase):
         self.assertEqual('bar', self.app['folder2']['foo'].data)
 
     def test_items_in_ignore_file_are_not_dumped(self):
-        self.app.manage_addFolder('folder')
-        self.app['folder'].manage_addFile('foo', 'one')
-        self.app['folder'].manage_addFile('bar', 'two')
-        self.app['folder'].manage_addFile('baz', 'three')
+        manage_addFolder(self.app, 'folder')
+        manage_addFile(self.app['folder'], 'foo', 'one')
+        manage_addFile(self.app['folder'], 'bar', 'two')
+        manage_addFile(self.app['folder'], 'baz', 'three')
         manage_addZReST(self.app['folder'], 'fssync-dump-ignore')
         ignore = self.app['folder']['fssync-dump-ignore']
         ignore.source = 'bar\nbaz'
@@ -322,18 +325,18 @@ class FolderTest(Testing.ZopeTestCase.FunctionalTestCase):
           sort=True))
 
     def test_items_in_ignore_file_are_kept_on_load(self):
-        self.app.manage_addFolder('folder')
+        manage_addFolder(self.app, 'folder')
         folder = self.app['folder']
-        folder.manage_addFile('foo', 'one')
-        folder.manage_addFile('bar', 'two')
+        manage_addFile(folder, 'foo', 'one')
+        manage_addFile(folder, 'bar', 'two')
         manage_addZReST(folder, 'fssync-dump-ignore')
         ignore = folder['fssync-dump-ignore']
         ignore.source = 'bar'
 
-        folder.manage_addFolder('subfolder')
+        manage_addFolder(folder, 'subfolder')
         subfolder = folder['subfolder']
-        subfolder.manage_addFile('baz', 'one')
-        subfolder.manage_addFile('qux', 'two')
+        manage_addFile(subfolder, 'baz', 'one')
+        manage_addFile(subfolder, 'qux', 'two')
         manage_addZReST(subfolder, 'fssync-dump-ignore')
         ignore = subfolder['fssync-dump-ignore']
         ignore.source = 'qux'
@@ -356,7 +359,7 @@ class FolderTest(Testing.ZopeTestCase.FunctionalTestCase):
                          sorted(self.app['folder']['subfolder'].objectIds()))
 
     def test_ignored_cookieuserfolder_should_restore_allow_groups(self):
-        self.app.manage_addFolder('folder')
+        manage_addFolder(self.app, 'folder')
         folder = self.app['folder']
 
         manage_addZReST(folder, 'fssync-dump-ignore')
@@ -396,7 +399,7 @@ class PythonScriptTest(Testing.ZopeTestCase.FunctionalTestCase):
     def setUp(self):
         super(PythonScriptTest, self).setUp()
         self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
-        self.app.manage_addFolder('folder')
+        manage_addFolder(self.app, 'folder')
 
     def tearDown(self):
         self.app.manage_delObjects(['folder'])
@@ -468,11 +471,11 @@ class PickleOrderTest(Testing.ZopeTestCase.FunctionalTestCase):
 
     def test_entries_xml_should_have_a_stable_sorting_order(self):
         for i in xrange(32):
-            self.app.manage_addFolder('folder')
+            manage_addFolder(self.app, 'folder')
             creation_order = list('abcdef')
             random.shuffle(creation_order)
             for key in creation_order:
-                self.app['folder'].manage_addFile(key, 'foo')
+                manage_addFile(self.app['folder'], key, 'foo')
             response = self.publish(
                 '/folder/@@toFS.snarf', basic='manager:asdf')
             self.assertEquals("""\
@@ -509,7 +512,7 @@ class PickleOrderTest(Testing.ZopeTestCase.FunctionalTestCase):
         # reimplement folder serialisation for Zope2 and have actually seen
         # attribute serialisation for folders break at one point.
         for i in xrange(32):
-            self.app.manage_addFolder('folder')
+            manage_addFolder(self.app, 'folder')
             creation_order = list('abcdef')
             random.shuffle(creation_order)
             for key in creation_order:
@@ -598,11 +601,11 @@ class BaseFileSystemTests(Testing.ZopeTestCase.FunctionalTestCase):
         self.app['acl_users']._doAddUser('manager', 'asdf', ('Manager',), [])
 
         # initial data structure
-        self.app.manage_addFolder('base')
-        self.app['base'].manage_addFolder('sub')
-        self.app['base'].manage_addFile('foo', 'Content of foo')
-        self.app['base'].manage_addFile('bar', 'Content of bar')
-        self.app['base']['sub'].manage_addFile('baz', '')
+        manage_addFolder(self.app, 'base')
+        manage_addFolder(self.app['base'], 'sub')
+        manage_addFile(self.app['base'], 'foo', 'Content of foo')
+        manage_addFile(self.app['base'], 'bar', 'Content of bar')
+        manage_addFile(self.app['base']['sub'], 'baz', '')
         self.repository = tempfile.mkdtemp()
 
         # save host and credentials
@@ -632,8 +635,8 @@ class BaseFileSystemTests(Testing.ZopeTestCase.FunctionalTestCase):
 class UserFolderTest(BaseFileSystemTests):
 
     def test_userfolder_is_not_duplicated_after_checkout_checkin(self):
-        self.app.manage_addFolder('folder')
-        self.app['folder'].manage_addProduct['OFSP'].manage_addUserFolder()
+        manage_addFolder(self.app, 'folder')
+        manage_addUserFolder(self.app['folder'])
         transaction.commit()
         self.assertTrue(self.app['folder'].__allow_groups__.aq_base is
                         self.app['folder']['acl_users'].aq_base)
@@ -761,7 +764,7 @@ class SanityCheckTest(BaseFileSystemTests):
             self.assertEquals(stat['diff_folder'], [])
 
     def test_roundtrip_with_strings_containing_cdata_end_sequence(self):
-        self.app['base'].manage_addFile('goo', 'foo ]]> bar')
+        manage_addFile(self.app['base'], 'goo', 'foo ]]> bar')
 
         gocept.fssyncz2.main.dump(
             self.host, 'base', self.credentials, self.repository)
