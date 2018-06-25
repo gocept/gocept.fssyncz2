@@ -2,6 +2,10 @@
 gocept.fssyncz2
 ===============
 
+
+**Please note: We do no longer actively support this package. If you still need it, please drop us a note, we can either transfer the repository or support you on a paid basis.**
+
+
 This package provides Zope2 integration of zope.fssync/zope.app.fssync, that
 is, the ability to dump and restore ZODB content to the filesystem (To that
 end, it provides synchronisers for OFS folders and the like, and adapts the
